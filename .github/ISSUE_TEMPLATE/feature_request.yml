@@ -1,0 +1,35 @@
+name: 功能建议 / Feature request
+description: 说明要完成的业务任务 / Describe the task you want to complete.
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        用虚构场景说明即可，不要上传真实客户资料、价格、账号、数据库或备份。
+        Use fictional examples. Do not upload real customer information, prices, credentials, databases or backups.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 资料检查 / Privacy check
+      options:
+        - label: "我已检查正文和附件，不含真实业务或个人敏感信息。 / I have checked that the text and attachments contain no sensitive business or personal information."
+          required: true
+  - type: textarea
+    id: task
+    attributes:
+      label: 想完成什么任务 / Task to complete
+      description: 说明业务场景和当前遇到的困难，不需要先设计技术方案。 / Describe the workflow and current difficulty; a technical design is not needed.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 希望怎样操作 / Desired outcome
+      description: 哪个变化能帮助你完成任务？ / What change would help you complete the task?
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: 现在如何处理 / Current workaround
+      description: 可选，说明目前的处理方式。只使用合成例子。 / Optional; describe how you handle this today, using only synthetic examples.

@@ -10,7 +10,7 @@ FactoryFlow Windows 开发者预览 — 首次安装和日常操作
 1. 把整个 ZIP 复制到工厂电脑，右键“全部解压”。不要在 ZIP 内直接双击运行。
 2. 双击“安装.cmd”。校验和复制需要一些时间，完成后桌面出现“FactoryFlow 工厂软件”。
 3. 双击桌面入口。第一次输入工厂名称、账号和密码；密码至少 12 个字符，输入时不会显示。
-4. 浏览器打开后，用刚才设置的账号登录。不用先建客户和物料：直接上传第一张客户订单，或照着纸质单填写，新客户在录单页顺手新建。已有物料表或客户名单，也可以先导入。
+4. 浏览器打开后，用刚才设置的账号登录。不用先建客户和物料：直接上传第一张客户订单，或照着纸质单填写。客户可在录单时新建；已有物料表可核对后导入。
 5. 完成订单确认、送货后，可做对账、导出 Excel，登记发送与客户反馈，最后形成正式结算单。
 
 可用功能
@@ -20,7 +20,7 @@ FactoryFlow Windows 开发者预览 — 首次安装和日常操作
 
 每天如何使用
 直接双击桌面入口。再次启动会继续使用已有业务数据。
-关闭浏览器不会丢数据。下班前可打开 %LOCALAPPDATA%\FactoryFlow，运行“备份工厂数据.cmd”，再运行“停止工厂软件.cmd”。
+已确认保存的业务记录不会因关闭浏览器丢失；关闭前请先保存当前录入。下班前可打开 %LOCALAPPDATA%\FactoryFlow，运行“备份工厂数据.cmd”，再运行“停止工厂软件.cmd”。
 “查看运行状态.cmd”会显示本机网址和数据目录；如果没有自动打开浏览器，请复制网址到 Chrome。
 
 备份和换电脑
@@ -41,5 +41,6 @@ FactoryFlow Windows 开发者预览 — 首次安装和日常操作
 
 运行环境来源
 Python: https://docs.python.org/3.14/using/windows.html
-PostgreSQL EDB 二进制分发: https://www.postgresql.org/download/windows/
+PostgreSQL 18.6 官方源码: https://ftp.postgresql.org/pub/source/v18.6/
+本预览包的 PostgreSQL 使用 MSVC x64 从官方源码构建，不使用 EDB 二进制分发。对应源码、校验值和构建说明随同版 FactoryFlow-third-party-sources-v0.1.0-preview.1.zip 提供。
 Visual C++ 官方运行库: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist

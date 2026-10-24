@@ -2,21 +2,33 @@
 
 [简体中文](README.md) · English
 
-An order and delivery workspace for small factories: take an order, deliver it in batches, see what remains, and reconcile with the customer.
+An order and delivery workspace for small factories: take an order, deliver it in batches, see what remains, and reconcile with the customer. The offline package processes business data and OCR on your computer, without uploading them to the cloud.
 
-**A local Windows developer preview.** For people exploring the workflow, reviewing the source, or trying synthetic examples. It has not passed production or factory-use acceptance.
+**Windows developer preview**
 
 ![Outstanding order lines after partial deliveries, preserving quantities and units — synthetic demo](docs/images/readme/en-03-open-lines.png)
 
 One synthetic order: 30 of 120 PCS delivered leaves 90 PCS; 10.25 of 35.5 KG delivered leaves 25.25 KG. Quantities with different units stay separate.
 
+## Download and try
+
+For Windows 10/11 x64, download `FactoryFlow-Windows-x64-v0.1.0-preview.1.zip` (about 174 MB) from the [v0.1.0-preview.1 release](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.1).
+
+1. Extract the whole ZIP, run `安装.cmd`, and follow the prompts to review the third-party component terms and install.
+2. Open the FactoryFlow desktop shortcut. On first launch, set your factory name and local account.
+3. Try entering an order, making a partial delivery and preparing a statement with the [synthetic purchase orders](samples/purchase-orders/README.en.md).
+
+Python, PostgreSQL and local OCR models are included. You do not need to install Python, Node.js or a database separately; core operations work offline once the ZIP has been downloaded and extracted. The [offline guide](docs/FACTORY-OFFLINE-GUIDE.txt) covers installation, backups and troubleshooting; its current text and installer prompts are in Chinese. Application source, third-party source materials and `SHA256SUMS.txt` are on the same release page.
+
 ## Start with an order
 
 You do not need a complete customer directory or item catalog first. Create a customer while entering an order, confirm lines without catalog links, and add reusable items as repeat orders arrive.
 
+![English first-run screen with file upload and manual order entry — synthetic demo](docs/images/readme/en-01-first-run.png)
+
 ![Start with one order: create a customer inline, review and confirm the order, then organize items later — synthetic demo, Chinese UI](docs/images/readme/zh-first-order.gif)
 
-Chinese UI; synthetic example, slowed to 0.5× (24 seconds). Recognition waiting and parts of manual review are omitted; this is not a measure of order-entry time.
+Chinese UI; a 24-second synthetic demo at 0.5× speed, with recognition waiting and parts of manual review omitted. [Full capture notes](docs/README-SCREENSHOTS.md)
 
 1. **Review the order.** Upload an image or PDF and check the extracted candidate against its source, or enter the order manually.
 2. **Record partial deliveries.** Track delivered and outstanding quantities by order line. Voiding a delivery reverses its original quantities and preserves its history.
@@ -26,7 +38,7 @@ Chinese UI; synthetic example, slowed to 0.5× (24 seconds). Recognition waiting
 
 ![Four candidate lines manually reviewed against the source; confirmation is still required — synthetic demo](docs/images/readme/en-02b-manually-reviewed.png)
 
-This is a **manually corrected candidate**, not evidence of successful automatic extraction. For this synthetic sample, the raw table parser produced 3 structured candidate rows in Chinese and 0 in English. Zero rows does not mean OCR read no text. Table parsing remains unreliable, and both samples needed corrections or manual entry. The [capture notes](docs/README-SCREENSHOTS.md) document that distinction.
+The screenshot shows a manually reviewed candidate. Recognition only proposes candidates; table parsing is still unreliable and requires corrections or manual entry against the original. [Raw extraction results and capture notes](docs/README-SCREENSHOTS.md)
 
 The [bilingual synthetic purchase orders](samples/purchase-orders/README.en.md) include source previews and reference line items. Companies, contacts, identifiers and transaction data are fictional; no real customer documents are included.
 
@@ -42,11 +54,13 @@ The web UI supports Simplified Chinese and English. New built-in reconciliation 
 
 The current currency is **CNY only**. Customer acceptance and finalized reconciliation do not mean payment received. Delivery notes and statements are not tax invoices. Inventory, payment processing, multiple currencies and foreign tax compliance are outside the current capabilities.
 
-The preview release will provide source, a Windows offline package, third-party source materials and checksums together under Releases. See [distribution notes](docs/DISTRIBUTION.md) for build inputs and verification scope. Native Excel behavior, physical printing, real-document compatibility and factory use need separate acceptance. Prepared core operations do not require cloud AI or an online account; initial dependency installation needs internet access.
+This is a developer preview and has not passed production or factory-use acceptance. See the [verification record](docs/VERIFICATION.md) for completed engineering checks. Installation on a clean Windows machine, native Excel behavior, physical printing and real-document compatibility still need acceptance. Use a new trial data directory; this release does not provide an in-place upgrade for an existing business database.
+
+The offline package runs on one computer and does not provide multi-user access over a local network. Backups and exported files still contain business information and need to be kept private. See the [distribution notes](docs/DISTRIBUTION.md) for build inputs and third-party materials.
 
 ## Local development
 
-Use Windows, Node.js 24 (see `package.json` for the exact range), uv, Python 3.14 and a separate PostgreSQL instance. Follow the [local operations guide](docs/LOCAL-OPERATIONS.md) for dependencies, configuration, explicit migrations and the first local account before starting the service. Startup does not migrate or reset data automatically.
+Development from source requires Windows, Node.js 24 (see `package.json` for the exact range), uv, Python 3.14 and a separate PostgreSQL instance. Installing development dependencies for the first time needs internet access. Follow the [local operations guide](docs/LOCAL-OPERATIONS.md) for dependencies, configuration, explicit migrations and the first local account before starting the service. Startup does not migrate or reset data automatically. These development tools are not required to try the Windows package.
 
 Frontend and contract checks, once the development environment is ready:
 
@@ -56,13 +70,11 @@ npm run contracts:check
 npm run build
 ```
 
-These checks do not establish real-world business or factory acceptance. See the [verification record](docs/VERIFICATION.md) for tested scope and limitations.
-
 ## Development and feedback
 
 AI assisted with code, documentation and tests. The maintainer controls requirements, scope and releases. People using the product still confirm business writes.
 
-After publication, feedback through GitHub Issues is welcome: Which step is hard to understand? Which units or document layouts are difficult to review? Share synthetic reproduction steps; keep customer originals, prices, credentials and databases private.
+Use [GitHub Issues](https://github.com/Doublzzz/FactoryFlow/issues/new/choose) to report problems or suggest improvements: Which step is hard to understand? Which units or document layouts are difficult to review? Reproduce issues with synthetic data; do not upload real customer documents, prices, credentials, databases or full logs. Report security vulnerabilities privately using the [security policy](SECURITY.md).
 
 Further reading: [business rules](docs/PRODUCT-SPEC.md) · [architecture](docs/ARCHITECTURE.md) · [glossary](docs/GLOSSARY.zh-en.md) · [privacy and release scope](docs/PRIVACY.md)
 

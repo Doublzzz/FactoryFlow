@@ -1,0 +1,58 @@
+name: 问题反馈 / Bug report
+description: 用合成资料复现问题 / Report a problem with synthetic data.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请用虚构客户和合成资料复现。不要上传真实客户原件、价格、账号、数据库、备份、完整日志或带个人用户名的本机路径。
+        Use fictional customers and synthetic data. Do not upload real documents, prices, credentials, databases, backups, full logs or personal local paths.
+
+        安全漏洞请按 [SECURITY.md](https://github.com/Doublzzz/FactoryFlow/blob/main/SECURITY.md) 私下报告，不要在此披露细节。
+        Report security vulnerabilities privately using [SECURITY.md](https://github.com/Doublzzz/FactoryFlow/blob/main/SECURITY.md), without posting details here.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 资料检查 / Privacy check
+      options:
+        - label: "我使用合成资料，已检查正文和附件不含敏感信息。 / I use synthetic data and have checked the text and attachments for sensitive information."
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本与安装方式 / Version and installation
+      description: 填预览版本或源码提交，并注明离线安装包或源码运行。 / Give the release or commit and whether you use the Windows package or source.
+      placeholder: v0.1.0-preview.1, Windows ZIP
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 系统与浏览器 / Operating system and browser
+      description: 只填名称和版本，不要提供机器名或个人路径。 / Names and versions only; no device name or personal paths.
+      placeholder: Windows version, Chrome / Edge version
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 合成复现步骤 / Synthetic reproduction steps
+      description: 从哪个页面开始，做了什么，在哪一步出现问题？ / Where did you start, what did you do, and which step failed?
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 期望与实际结果 / Expected and actual result
+      description: 分别说明你期待看到什么和实际发生了什么。 / Describe what you expected and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 补充信息 / Additional context
+      description: 可提供合成界面截图或脱敏后的最小错误片段；不要上传完整日志或数据库。 / Optional synthetic screenshots or minimal redacted error excerpts; no full logs or databases.
