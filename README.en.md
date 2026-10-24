@@ -1,14 +1,44 @@
-# FactoryFlow / 交有数
+<p align="center">
+  <img src="docs/images/logo.svg" width="72" height="72" alt="">
+</p>
 
-[简体中文](README.md) · English
+<h1 align="center">FactoryFlow</h1>
 
-An order and delivery workspace for small factories: take an order, deliver it in batches, see what remains, and reconcile with the customer. The offline package processes business data and OCR on your computer, without uploading them to the cloud.
+<p align="center">
+  <strong>Orders, deliveries and customer reconciliation for small factories.</strong><br>
+  Start with your first order, no setup imports. Your data and OCR stay on your own computer.
+</p>
 
-**Windows developer preview**
+<p align="center">
+  <a href="https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.1"><img alt="Windows preview" src="https://img.shields.io/github/v/release/Doublzzz/FactoryFlow?include_prereleases&label=Windows%20preview&color=5b6ee1"></a>
+  <img alt="Data stays local" src="https://img.shields.io/badge/data-stays%20local-2f8f5b">
+  <img alt="UI in Chinese and English" src="https://img.shields.io/badge/UI-%E4%B8%AD%E6%96%87%20%7C%20English-555">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/Doublzzz/FactoryFlow?color=555"></a>
+</p>
 
-![Outstanding order lines after partial deliveries, preserving quantities and units — synthetic demo](docs/images/readme/en-03-open-lines.png)
+<p align="center">
+  <a href="#download-and-try">Download</a> · <a href="#how-an-order-moves">How it works</a> · <a href="README.md">简体中文</a>
+</p>
 
-One synthetic order: 30 of 120 PCS delivered leaves 90 PCS; 10.25 of 35.5 KG delivered leaves 25.25 KG. Quantities with different units stay separate.
+![First run: drop in a customer's order or type a paper order in; importing customers and items is optional — synthetic demo](docs/images/readme/en-01-first-run.png)
+
+## Why it works this way
+
+**No setup. Start with the first order.** Many small factories have no tidy customer list or item catalog. Photograph an order or type in a paper one; create the customer while you enter it. When the same items keep coming back, add them to the item catalog. You can still import an existing item list first.
+
+**Your data stays on this computer.** The offline package bundles its own database and local OCR models. Order originals, deliveries and statements are stored locally. Nothing goes through a cloud service, no online account is needed, and it keeps working without internet.
+
+**People confirm each step, and the numbers add up.** Recognition only proposes candidates; an order exists only after someone checks it against the original. PCS, KG and M stay separate, quantities and money use exact decimals, and revising an order saves a new version while keeping the old one and its evidence.
+
+## Details from a real small factory
+
+FactoryFlow was built for one small factory, where an earlier version is already in daily use. Many design choices come from how the work actually happens there:
+
+- One order mixes PCS, KG and M. Each line keeps its own unit; nothing gets summed into a meaningless total.
+- Customers rarely take everything at once. Goods go out in batches, and each batch gets its own delivery note.
+- The customer's item codes are not your item codes, and the leading zero in `000120-A` matters.
+- Month-end statements often have to follow the customer's own Excel template, and "accepted" does not mean "paid".
+- When an order is revised, you still need to see what it said before.
 
 ## Download and try
 
@@ -16,53 +46,45 @@ For Windows 10/11 x64, download `FactoryFlow-Windows-x64-v0.1.0-preview.1.zip` (
 
 1. Extract the whole ZIP, run `安装.cmd`, and follow the prompts to review the third-party component terms and install.
 2. Open the FactoryFlow desktop shortcut. On first launch, set your factory name and local account.
-3. Try entering an order, making a partial delivery and preparing a statement with the [synthetic purchase orders](samples/purchase-orders/README.en.md).
+3. Try entering an order, a partial delivery and a statement with the [synthetic purchase orders](samples/purchase-orders/README.en.md).
 
-Python, PostgreSQL and local OCR models are included. You do not need to install Python, Node.js or a database separately; core operations work offline once the ZIP has been downloaded and extracted. The [offline guide](docs/FACTORY-OFFLINE-GUIDE.txt) covers installation, backups and troubleshooting; its current text and installer prompts are in Chinese. Application source, third-party source materials and `SHA256SUMS.txt` are on the same release page.
+You do not need to install Python, a database or Node.js. The [offline guide](docs/FACTORY-OFFLINE-GUIDE.txt) covers installation, backups and troubleshooting; it and the installer prompts are currently in Chinese. Application source, third-party source materials and `SHA256SUMS.txt` are on the same release page.
 
-## Start with an order
+## How an order moves
 
-You do not need a complete customer directory or item catalog first. Create a customer while entering an order, confirm lines without catalog links, and add reusable items as repeat orders arrive.
+**1. Take the order.** Upload a photo, screenshot or PDF and check the extracted lines next to the original, or enter the order by hand. Here is the whole flow in the Chinese UI:
 
-![English first-run screen with file upload and manual order entry — synthetic demo](docs/images/readme/en-01-first-run.png)
+![Start with one order: create a customer inline, review against the source, then confirm — synthetic demo, Chinese UI](docs/images/readme/zh-first-order.gif)
 
-![Start with one order: create a customer inline, review and confirm the order, then organize items later — synthetic demo, Chinese UI](docs/images/readme/zh-first-order.gif)
+<sub>Chinese UI; synthetic demo at 0.5× speed, with recognition waiting and parts of manual review omitted. <a href="docs/README-SCREENSHOTS.md">Capture notes</a></sub>
 
-Chinese UI; a 24-second synthetic demo at 0.5× speed, with recognition waiting and parts of manual review omitted. [Full capture notes](docs/README-SCREENSHOTS.md)
+![Four lines manually reviewed against the source; confirmation is still required — synthetic demo](docs/images/readme/en-02b-manually-reviewed.png)
 
-1. **Review the order.** Upload an image or PDF and check the extracted candidate against its source, or enter the order manually.
-2. **Record partial deliveries.** Track delivered and outstanding quantities by order line. Voiding a delivery reverses its original quantities and preserves its history.
-3. **Reconcile with the customer.** Gather delivery lines into a draft, record sending evidence and feedback, and distinguish accepted, pending-review and deferred quantities.
-4. **Finalize the period.** Fix selected quantities and amounts, then explicitly carry eligible balances forward while retaining earlier evidence.
-5. **Keep the paperwork.** Export built-in or customer-template Excel files and organize copies of orders, delivery notes and reconciliation files.
+<sub>This shows the result after manual review. Recognition only proposes candidates, and table parsing is still unreliable, so lines need correcting or adding against the original. <a href="docs/README-SCREENSHOTS.md">Raw recognition results</a></sub>
 
-![Four candidate lines manually reviewed against the source; confirmation is still required — synthetic demo](docs/images/readme/en-02b-manually-reviewed.png)
+**2. Deliver in batches.** Record how much each delivery covers per order line, and the outstanding quantity goes down. Voiding a delivery restores its quantities and keeps the record.
 
-The screenshot shows a manually reviewed candidate. Recognition only proposes candidates; table parsing is still unreliable and requires corrections or manual entry against the original. [Raw extraction results and capture notes](docs/README-SCREENSHOTS.md)
+![Outstanding lines after a partial delivery, each in its own unit — synthetic demo](docs/images/readme/en-03-open-lines.png)
 
-The [bilingual synthetic purchase orders](samples/purchase-orders/README.en.md) include source previews and reference line items. Companies, contacts, identifiers and transaction data are fictional; no real customer documents are included.
+<sub>One synthetic order: 30 of 120 PCS delivered leaves 90 PCS; 10.25 of 35.5 KG delivered leaves 25.25 KG.</sub>
 
-## Product choices
+**3. Reconcile with the customer.** Gather a period's deliveries into a draft statement, record what was sent and how the customer replied, and keep accepted, pending-review and deferred quantities apart.
 
-- **People confirm business actions.** Extraction proposes candidates; a person confirms the order. Customer acceptance and period finalization are separate actions too.
-- **Build the catalog through orders.** Keep internal and customer item codes, create entries manually, or review an xlsx/UTF-8 CSV import. Catalog entries do not create stock; linking an item later does not rewrite confirmed source fields.
-- **Keep exact quantities and history.** Preserve source units and use exact decimals for quantities and money. Confirmed revisions stay immutable. Each business transaction commits its audit records, idempotency result and ledger effects together.
+**4. Finalize the period.** Fix this period's quantities and amounts, explicitly carry eligible balances forward, and keep earlier evidence.
 
-## What works, and where it stops
+**5. Export and file.** Export statements in the built-in format or the customer's own Excel template, and keep order originals, delivery copies and statements filed together.
 
-The web UI supports Simplified Chinese and English. New built-in reconciliation Excel exports and live delivery printing support English. Customer names, item codes, notes and source documents retain their original text. Customer templates retain their wording; archived delivery copies currently use the Chinese layout.
+## Current limits
 
-The current currency is **CNY only**. Customer acceptance and finalized reconciliation do not mean payment received. Delivery notes and statements are not tax invoices. Inventory, payment processing, multiple currencies and foreign tax compliance are outside the current capabilities.
+- This is a newly packaged **Windows developer preview**. Installation on a clean Windows machine, native Excel pagination, physical printing and compatibility with more document layouts are still being verified; see the [verification record](docs/VERIFICATION.md).
+- Single computer only, with no multi-user access over a local network. Use a new trial data directory: this release cannot upgrade an existing business database, including data from the earlier version.
+- **CNY only.** Customer acceptance and finalized statements do not mean payment was received, and statements and delivery notes are not tax invoices. No inventory, payments, multiple currencies or foreign tax.
+- The UI supports Simplified Chinese and English, and so do the built-in statement Excel and delivery printing. Customer names, item codes and source text stay as written, customer templates keep their wording, and archived delivery copies currently use the Chinese layout.
+- Backups and exports contain business information; keep them private. See the [distribution notes](docs/DISTRIBUTION.md) for build inputs and third-party materials.
 
-This is a developer preview and has not passed production or factory-use acceptance. See the [verification record](docs/VERIFICATION.md) for completed engineering checks. Installation on a clean Windows machine, native Excel behavior, physical printing and real-document compatibility still need acceptance. Use a new trial data directory; this release does not provide an in-place upgrade for an existing business database.
+## Develop from source
 
-The offline package runs on one computer and does not provide multi-user access over a local network. Backups and exported files still contain business information and need to be kept private. See the [distribution notes](docs/DISTRIBUTION.md) for build inputs and third-party materials.
-
-## Local development
-
-Development from source requires Windows, Node.js 24 (see `package.json` for the exact range), uv, Python 3.14 and a separate PostgreSQL instance. Installing development dependencies for the first time needs internet access. Follow the [local operations guide](docs/LOCAL-OPERATIONS.md) for dependencies, configuration, explicit migrations and the first local account before starting the service. Startup does not migrate or reset data automatically. These development tools are not required to try the Windows package.
-
-Frontend and contract checks, once the development environment is ready:
+You need Windows, Node.js 24 (see `package.json` for the exact range), uv, Python 3.14 and a separate PostgreSQL instance; installing development dependencies the first time needs internet access. Follow the [local operations guide](docs/LOCAL-OPERATIONS.md) for dependencies, configuration, explicit migrations and the first local account. Startup never migrates or resets data on its own.
 
 ```powershell
 npm run typecheck
@@ -70,14 +92,14 @@ npm run contracts:check
 npm run build
 ```
 
+Further reading: [business rules](docs/PRODUCT-SPEC.md) · [architecture](docs/ARCHITECTURE.md) · [glossary](docs/GLOSSARY.zh-en.md) · [privacy and release scope](docs/PRIVACY.md)
+
 ## Development and feedback
 
-AI assisted with code, documentation and tests. The maintainer controls requirements, scope and releases. People using the product still confirm business writes.
+AI helped write the code, documentation and tests; the maintainer decides requirements, scope and releases. Business writes in the product are always confirmed by the person using it.
 
-Use [GitHub Issues](https://github.com/Doublzzz/FactoryFlow/issues/new/choose) to report problems or suggest improvements: Which step is hard to understand? Which units or document layouts are difficult to review? Reproduce issues with synthetic data; do not upload real customer documents, prices, credentials, databases or full logs. Report security vulnerabilities privately using the [security policy](SECURITY.md).
-
-Further reading: [business rules](docs/PRODUCT-SPEC.md) · [architecture](docs/ARCHITECTURE.md) · [glossary](docs/GLOSSARY.zh-en.md) · [privacy and release scope](docs/PRIVACY.md)
+Feedback is welcome in [GitHub Issues](https://github.com/Doublzzz/FactoryFlow/issues/new/choose): Which step is hard to follow? Which units or document layouts are hard to check? Reproduce problems with synthetic data, and do not upload real customer documents, prices, credentials, databases or full logs. Report security vulnerabilities privately using the [security policy](SECURITY.md).
 
 ## License
 
-This project uses the [MIT License](LICENSE), permitting commercial use and closed-source redistribution with the copyright and license notices retained. Fonts and dependencies retain their own licenses; see [third-party materials](THIRD-PARTY-NOTICES.md).
+[MIT](LICENSE): commercial use and closed-source redistribution are allowed with the copyright and license notices retained. Fonts and dependencies keep their own licenses; see [third-party materials](THIRD-PARTY-NOTICES.md).

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="FactoryFlow">
+  <rect width="96" height="96" rx="22" fill="#5b6ee1"/>
+  <g transform="translate(14 14) scale(2.43)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="square">
+    <path d="M5 6h18v16H5V6Z M9 11h10 M9 16h6 M19 16v6"/>
+  </g>
+</svg>
