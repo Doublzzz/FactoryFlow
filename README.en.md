@@ -6,6 +6,7 @@
 
 <p align="center">
   <strong>Orders, deliveries and customer reconciliation for small factories.</strong><br>
+  Built with direct involvement from frontline factory staff. An earlier version is in daily factory use.<br>
   Start with your first order, no setup imports. Your data and OCR stay on your own computer.
 </p>
 
@@ -32,7 +33,7 @@
 
 ## Details from a real small factory
 
-FactoryFlow grew out of everyday work at one small factory, where an earlier version is already in daily use. It focuses on concrete questions: What is still owed on this order? How much of what was delivered has the customer accepted? What belongs on this month's statement, and what still needs following up?
+FactoryFlow was built with direct involvement from frontline factory staff, and an earlier version is already in daily use at a small factory. It focuses on concrete questions: What is still owed on this order? How much of what was delivered has the customer accepted? What belongs on this month's statement, and what still needs following up?
 
 - **One order, several deliveries, a clear balance.** Record each batch against its order lines and print a delivery note. If a delivery was entered incorrectly, voiding it restores the outstanding quantities and keeps the original record.
 - **Pieces, weight and length each keep their own count.** One order can mix PCS, KG and M. Outstanding quantities are calculated per line, without adding incompatible units into one total.
