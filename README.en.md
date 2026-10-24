@@ -84,7 +84,7 @@ You do not need to install Python, a database or Node.js. The [offline guide](do
 
 ## Current limits
 
-- This is a newly packaged **Windows developer preview**. Installation on a clean Windows machine, native Excel pagination, physical printing and compatibility with more document layouts are still being verified; see the [verification record](docs/VERIFICATION.md).
+- This is a **Windows developer preview**. See the [verification record](docs/VERIFICATION.md) for installation and workflow checks.
 - Single computer only, with no multi-user access over a local network.
 - During the preview, data is not guaranteed to carry over to the next version. Do not keep your only copy of real business data in the preview, and back up regularly.
 - **CNY only.** Customer acceptance and finalized statements do not mean payment was received, and statements and delivery notes are not tax invoices. No inventory, payments, multiple currencies or foreign tax.
