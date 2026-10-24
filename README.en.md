@@ -20,11 +20,11 @@
   <a href="#download-and-try">Download</a> · <a href="#how-an-order-moves">How it works</a> · <a href="README.md">简体中文</a>
 </p>
 
-![First run: drop in a customer's order or type a paper order in; importing customers and items is optional — synthetic demo](docs/images/readme/en-01-first-run.png)
+![First run: drop in a customer's order or enter it by hand; no customer directory or item catalog is required in advance. Synthetic demo.](docs/images/readme/en-01-first-run.png)
 
 ## Why it works this way
 
-**No setup. Start with the first order.** Many small factories have no tidy customer list or item catalog. Photograph an order or type in a paper one; create the customer while you enter it. When the same items keep coming back, add them to the item catalog. You can still import an existing item list first.
+**No catalog required. Start with the first order.** Many small factories have no tidy customer list or item catalog. Photograph an order or type in a paper one; create the customer while you enter it. When the same items keep coming back, add them to the item catalog. You can still import an existing item list first.
 
 **Your data stays on this computer.** The offline package bundles its own database and local OCR models. Order originals, deliveries and statements are stored locally. Nothing goes through a cloud service, no online account is needed, and it keeps working without internet.
 
@@ -32,13 +32,14 @@
 
 ## Details from a real small factory
 
-FactoryFlow was built for one small factory, where an earlier version is already in daily use. Many design choices come from how the work actually happens there:
+FactoryFlow grew out of everyday work at one small factory, where an earlier version is already in daily use. It focuses on concrete questions: What is still owed on this order? How much of what was delivered has the customer accepted? What belongs on this month's statement, and what still needs following up?
 
-- One order mixes PCS, KG and M. Each line keeps its own unit; nothing gets summed into a meaningless total.
-- Customers rarely take everything at once. Goods go out in batches, and each batch gets its own delivery note.
-- The customer's item codes are not your item codes, and the leading zero in `000120-A` matters.
-- Month-end statements often have to follow the customer's own Excel template, and "accepted" does not mean "paid".
-- When an order is revised, you still need to see what it said before.
+- **One order, several deliveries, a clear balance.** Record each batch against its order lines and print a delivery note. If a delivery was entered incorrectly, voiding it restores the outstanding quantities and keeps the original record.
+- **Pieces, weight and length each keep their own count.** One order can mix PCS, KG and M. Outstanding quantities are calculated per line, without adding incompatible units into one total.
+- **The customer's item code connects to yours.** One item can have different codes for different customers, with leading zeros preserved in text codes. Enter an order first and link it to the catalog later; its original names, specifications and item codes remain intact.
+- **Month-end statements follow the customer's format.** Upload a customer Excel template, map its fields and check the preview. Statement lines can also record the customer's external document number so both sides can find the same delivery.
+- **Partial acceptance leaves something to follow up.** Customer acceptance, pending review and current-period settlement are separate records. Accepted quantities can be settled across periods, with carry-forwards explicitly arranged by a person. Neither acceptance nor a finalized statement means payment has arrived.
+- **Later checks can go back to the original and the right version.** Order changes save a new revision, finalized settlement evidence is retained, and delivery records, customer feedback and related files remain available for reference.
 
 ## Download and try
 
