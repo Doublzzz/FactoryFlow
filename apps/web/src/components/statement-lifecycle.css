@@ -1,0 +1,65 @@
+.statement-lifecycle h3 { margin: 0 0 16px; font-size: 16px; }
+.statement-lifecycle details { margin: 12px 0; }
+.statement-lifecycle summary { cursor: pointer; color: #344054; font-size: 14px; font-weight: 600; min-height: 44px; padding: 12px 0; }
+.statement-lifecycle summary:hover { color: var(--accent); }
+.statement-lifecycle small { display: block; color: #536079; overflow-wrap: anywhere; }
+.statement-lifecycle fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
+.statement-lifecycle label { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.statement-lifecycle select { max-width: 100%; }
+.lifecycle-operation-groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 20px; }
+.lifecycle-operation-groups button { color: #344054; background: #fff; border-color: #c8d1df; font-weight: 500; }
+.lifecycle-operation-groups button:hover { background: #f3f5f9; }
+.lifecycle-operation-groups button[aria-pressed="true"] { color: #1d4bb4; background: #eaf0fd; border-color: #7698e3; font-weight: 650; }
+.lifecycle-operation-select { max-width: 480px; }
+.lifecycle-action-note { color: #536079; font-size: 13px; margin: 8px 0 20px; }
+.lifecycle-command > form > fieldset > .actions { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.lifecycle-records { border-top: 1px solid #cbd5e3; margin-top: 32px; padding-top: 24px; }
+.lifecycle-records > details { margin: 0; border-bottom: 1px solid var(--line); }
+.lifecycle-records .table-wrap { margin-bottom: 16px; }
+.lifecycle-records table { min-width: 700px; }
+.lifecycle-records li { padding: 10px 0; color: #344054; font-size: 14px; overflow-wrap: anywhere; }
+.statement-lifecycle .lifecycle-check { flex-direction: row; align-items: center; }
+.statement-lifecycle .lifecycle-check input { width: auto; }
+.lifecycle-preview { border: 1px solid #aabddd; border-radius: 6px; padding: 20px; margin: 20px 0; background: #f3f6fc; }
+.lifecycle-preview dd { margin: 4px 0 12px; font-weight: 700; }
+@media(max-width: 760px) {
+  .lifecycle-operation-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .statement-lifecycle .statement-filters { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .statement-lifecycle .actions { align-items: stretch; flex-direction: column; }
+}
+
+/* Keep the editable quantity and price columns readable at normal desktop width. */
+.statement-editor .statement-lines-compact table { min-width: 660px; width: 100%; table-layout: fixed; }
+.statement-lines-compact .st-date { width: 112px; }
+.statement-lines-compact .st-item { width: auto; }
+.statement-lines-compact .st-unit { width: 64px; }
+.statement-lines-compact .st-num { width: 112px; }
+.statement-lines-compact .st-action { width: 64px; }
+html[lang="en"] .statement-lines-compact th { white-space: normal; overflow-wrap: anywhere; }
+html[lang="en"] .statement-lines-compact .st-num { width: 136px; }
+html[lang="en"] .statement-lines-compact .st-action { width: 88px; }
+.statement-editor .statement-lines-compact .numeric input { text-align: right; min-height: 44px; font-size: inherit; }
+.statement-lines-compact .item-identity { overflow-wrap: anywhere; }
+.statement-lines-compact .statement-row-details { margin-top: 12px; }
+.statement-lines-compact .statement-row-details summary { cursor: pointer; min-height: 44px; padding: 12px 0; font-size: 14px; color: var(--accent); }
+.statement-lines-compact .statement-row-details label { display: grid; gap: 6px; margin: 8px 0 12px; font-size: 14px; }
+.statement-lines-compact .statement-row-details input { min-height: 44px; font-size: inherit; }
+.statement-editor .statement-candidates-compact table { min-width: 620px; table-layout: auto; }
+.statement-candidates-compact td:nth-child(2) { min-width: 220px; overflow-wrap: anywhere; }
+.statement-lifecycle .lifecycle-business-steps { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
+.lifecycle-business-steps button { text-align: left; padding: 14px; }
+.lifecycle-business-steps button small { color: inherit; font-size: 12px; margin-bottom: 6px; }
+.lifecycle-more-actions { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.lifecycle-more-actions .actions { flex-wrap: wrap; }
+.lifecycle-more-actions button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.statement-lifecycle .lifecycle-current-action { margin-top: 24px; font-size: 20px; }
+.statement-lifecycle .statement-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.statement-lifecycle .statement-filters > label { min-width: 0; margin: 0; }
+.statement-lifecycle .statement-filters > label:first-child { grid-column: 1 / -1; }
+.statement-lifecycle .statement-filters select { width: 100%; min-width: 0; text-overflow: ellipsis; }
+@media(max-width: 760px) {
+  .statement-lifecycle .statement-filters { grid-template-columns: minmax(0, 1fr); }
+  .statement-lifecycle .lifecycle-business-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.statement-lifecycle .statement-filters > .lifecycle-wide-field { grid-column: 1 / -1; }

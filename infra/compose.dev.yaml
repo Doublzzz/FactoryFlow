@@ -1,0 +1,19 @@
+name: factoryflow-dev
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: factoryflow
+      POSTGRES_USER: factoryflow_dev
+      POSTGRES_PASSWORD: ${FACTORYFLOW_POSTGRES_PASSWORD:?Set a local development password}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - factoryflow-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U factoryflow_dev -d factoryflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  factoryflow-postgres:

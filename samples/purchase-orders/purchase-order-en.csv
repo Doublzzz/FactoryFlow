@@ -1,0 +1,5 @@
+﻿Line,Customer item code,Internal item code,Item name,Specification,Quantity,Unit,Unit price_CNY,Amount_CNY,Required date
+1,C-P120,000120-A,Aluminum angle bracket,6061-T6 / L40 x 40 x 4 mm,120,PCS,8.5000,1020.00,2026-11-16
+2,C-F240,000240-B,Socket head cap screw,M6 x 20 mm / A2-70,240,PCS,0.6500,156.00,2026-11-16
+3,C-R035,000035-C,Aluminum round bar,6061-T6 / diameter 20 mm,35.5,KG,24.8000,880.40,2026-11-18
+4,C-T048,000048-D,Aluminum square tube,6063-T5 / 25 x 25 x 2 mm,48,M,18.6000,892.80,2026-11-18

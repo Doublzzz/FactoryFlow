@@ -1,0 +1,30 @@
+.venv/
+.tools/
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.runtime/
+.artifacts/
+.codex/
+*.sqlite*
+*.db
+*.log
+# Private generated runtime material
+**/client.json
+**/private-state.json
+**/admin.json
+**/app.json
+*.dump
+*.backup
+output/
+# Local generated deliverables
+deliverables/

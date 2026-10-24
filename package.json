@@ -1,0 +1,21 @@
+{
+  "name": "factoryflow",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.19.0 <25" },
+  "workspaces": ["apps/web", "packages/api-client"],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @factoryflow/web",
+    "build": "npm run build --workspace @factoryflow/web",
+    "typecheck": "tsc --noEmit -p apps/web/tsconfig.json",
+    "contracts:generate": "node scripts/generate-client.mjs",
+    "contracts:check": "node scripts/generate-client.mjs --check"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "@types/node": "24.10.1"
+  }
+}

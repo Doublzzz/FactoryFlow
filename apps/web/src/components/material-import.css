@@ -1,0 +1,42 @@
+.material-import-page { max-width: 1380px; }
+.material-import-page h2 { margin-bottom: 16px; }
+.material-import-page .work-panel + .work-panel { margin-top: 22px; }
+.import-file-label { max-width: 680px; }
+.import-header-control { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; margin-top: 18px; }
+.import-header-control strong { align-self: center; overflow-wrap: anywhere; }
+.import-header-control label { max-width: 150px; }
+.import-column-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.import-customer { max-width: 480px; margin: 12px 0 20px; }
+.import-source-sample { margin: 20px 0; }
+.import-source-sample .table-wrap { margin-top: 12px; }
+.import-source-sample td { white-space: pre-wrap; overflow-wrap: anywhere; }
+.material-import-table { table-layout: fixed; }
+.material-import-table th:first-child { width: 78px; }
+.material-import-table th:nth-child(2) { width: 23%; }
+.material-import-table th:nth-child(3) { width: 16%; }
+.material-import-table th:nth-child(4) { width: 24%; }
+.material-import-table td { vertical-align: top; overflow-wrap: anywhere; }
+.material-import-table td > small, .material-import-table td > span, .material-import-table td strong { display: block; }
+.material-import-table small { margin-top: 7px; line-height: 1.6; color: var(--muted); }
+.material-import-table .text-button { text-align: left; margin-top: 8px; }
+.material-import-table .import-candidate { display: block; }
+.material-import-table select { width: 100%; }
+.import-issues { padding-left: 18px; margin: 0; color: #9a4d16; font-size: 13px; line-height: 1.65; }
+.import-number-confirm { align-items: start; font-size: 13px; line-height: 1.6; margin-top: 12px; }
+.import-number-confirm input { margin-top: 5px; flex-shrink: 0; }
+.import-picker-panel { margin: 18px 0; padding: 20px; border: 2px solid #5267d8; border-radius: 10px; background: #f7f8ff; }
+.import-confirm-actions { margin-top: 22px; }
+.import-pagination { flex-wrap: wrap; margin-top: 18px; }
+.import-pagination span { align-self: center; color: var(--muted); font-size: 13px; }
+.import-result strong { font-size: 20px; }
+@media (max-width: 700px) {
+  .import-header-control { align-items: stretch; flex-direction: column; }
+  .import-column-grid { grid-template-columns: 1fr; }
+  .material-import-table { min-width: 0 !important; }
+  .material-import-table thead { display: none; }
+  .material-import-table, .material-import-table tbody, .material-import-table tr, .material-import-table td { display: block; width: 100%; }
+  .material-import-table tr { padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .material-import-table td { border: 0; padding: 8px 0; }
+  .material-import-table td::before { content: attr(data-label); display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .import-picker-panel { padding: 12px; }
+}

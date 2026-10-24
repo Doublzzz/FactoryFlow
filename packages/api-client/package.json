@@ -1,0 +1,9 @@
+{
+  "name": "@factoryflow/api-client",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./schema": "./src/schema.d.ts" },
+  "dependencies": { "openapi-fetch": "0.17.0" }
+}

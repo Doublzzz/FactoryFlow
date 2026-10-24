@@ -1,0 +1,104 @@
+{
+  "synthetic": true,
+  "scenario_id": "SYNTHETIC-PO-001",
+  "order_number": "DEMO-PO-2026-001",
+  "order_date": "2026-11-02",
+  "currency": "CNY",
+  "tax_mode": "tax_included",
+  "buyer": {
+    "zh": "示例采购方 A（合成）",
+    "en": "Example Buyer A (Synthetic)",
+    "email": "purchasing@buyer.example",
+    "address_zh": "虚构示例市 · 演示工业区 1 号（非真实地址）",
+    "address_en": "1 Demo Industrial Park, Example City (fictional address)"
+  },
+  "supplier": {
+    "zh": "示例精密零件厂 B（合成）",
+    "en": "Example Precision Parts B (Synthetic)",
+    "email": "sales@supplier.example",
+    "address_zh": "虚构示例市 · 样件制造区 2 号（非真实地址）",
+    "address_en": "2 Sample Manufacturing Park, Example City (fictional address)"
+  },
+  "delivery_contact": {
+    "zh": "演示收货组（非真实联系人）",
+    "en": "Demo Receiving Team (fictional contact)"
+  },
+  "lines": [
+    {
+      "line": 1,
+      "customer_item_code": "C-P120",
+      "internal_item_code": "000120-A",
+      "name_zh": "铝合金角码",
+      "name_en": "Aluminum angle bracket",
+      "specification": "6061-T6 / L40 x 40 x 4 mm",
+      "quantity": "120",
+      "unit": "PCS",
+      "unit_price": "8.5000",
+      "amount": "1020.00",
+      "required_date": "2026-11-16"
+    },
+    {
+      "line": 2,
+      "customer_item_code": "C-F240",
+      "internal_item_code": "000240-B",
+      "name_zh": "内六角螺钉",
+      "name_en": "Socket head cap screw",
+      "specification": "M6 x 20 mm / A2-70",
+      "quantity": "240",
+      "unit": "PCS",
+      "unit_price": "0.6500",
+      "amount": "156.00",
+      "required_date": "2026-11-16"
+    },
+    {
+      "line": 3,
+      "customer_item_code": "C-R035",
+      "internal_item_code": "000035-C",
+      "name_zh": "铝合金圆棒",
+      "name_en": "Aluminum round bar",
+      "specification": "6061-T6 / diameter 20 mm",
+      "quantity": "35.5",
+      "unit": "KG",
+      "unit_price": "24.8000",
+      "amount": "880.40",
+      "required_date": "2026-11-18"
+    },
+    {
+      "line": 4,
+      "customer_item_code": "C-T048",
+      "internal_item_code": "000048-D",
+      "name_zh": "铝合金方管",
+      "name_en": "Aluminum square tube",
+      "specification": "6063-T5 / 25 x 25 x 2 mm",
+      "quantity": "48",
+      "unit": "M",
+      "unit_price": "18.6000",
+      "amount": "892.80",
+      "required_date": "2026-11-18"
+    }
+  ],
+  "total": "2949.20",
+  "scenario": {
+    "partial_delivery": {
+      "quantities": [
+        "30",
+        "80",
+        "10.25",
+        "12"
+      ],
+      "remaining": [
+        "90",
+        "160",
+        "25.25",
+        "36"
+      ],
+      "expected_amount": "784.40"
+    },
+    "void_restores_original_quantities": true,
+    "customer_acceptance_is_not_payment": true
+  },
+  "disclosure": {
+    "zh": "合成演示资料，无交易效力；所有主体、地址、单号和价格均为虚构。",
+    "en": "Synthetic demonstration only. Not a real order. All parties, addresses, identifiers and prices are fictional."
+  }
+}
