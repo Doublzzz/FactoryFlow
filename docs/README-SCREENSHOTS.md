@@ -52,7 +52,7 @@ README 可选 `03-open-lines` 展示分批送货，再用 `02b-manually-reviewed
 ![根据采购单人工校正后，再确认生成订单（合成演示）](docs/images/readme/zh-02b-manually-reviewed.png)
 ```
 
-英文静图图注使用 “Synthetic demo; manually reviewed against the source”。当前源码候选的中英文 README 各采用人工核对完成、分批送货后待交清单两张原始截图，并共用下述中文动图；英文 README 明确标注中文界面。原先的首次打开静图仍保存在 `docs/images/readme/`。六张 PNG 复制时均核对了 SHA-256，未修改图像内容。完整截图与原始提取回执保留为独立本地验证材料；其中的运行配置不属于源码发布范围。
+英文静图图注使用 “Synthetic demo; manually reviewed against the source”。中英文 README 各采用人工核对完成、分批送货后待交清单两张原始截图；2026-10-24 起，英文 README 使用独立录制的英文动图，中文动图保持原样。原先的首次打开静图仍保存在 `docs/images/readme/`。六张 PNG 复制时均核对了 SHA-256，未修改图像内容。完整截图与原始提取回执保留为独立本地验证材料；其中的运行配置不属于源码发布范围。
 
 ## 从第一张订单开始的动图
 
@@ -61,3 +61,15 @@ README 可选 `03-open-lines` 展示分批送货，再用 `02b-manually-reviewed
 动图为 960×720、24 秒循环、约 3.25 MB。按本次审阅反馈，在已采用的 12 秒剪辑上将每帧显示时长加倍，保留原有画面与字幕，避免关键操作和结果一闪而过。四段分别约为 6、5.5、5、7.5 秒；这是 0.5 倍速操作节选，不是实际用户完成首张订单的计时。
 
 画面来自全新合成环境中的真实产品操作。原始中文提取为 3 行，经对照原单人工补齐、校正为 4 行后，再勾选并确认生成订单。识别等待和部分逐项核对过程被省略，并在字幕及 README 图注中披露。顶部说明为后期字幕；没有重绘产品界面或改写业务结果。
+
+## English first-order GIF
+
+`docs/images/readme/en-first-order.gif` was recorded on 2026-10-24 using the actual English UI and the English synthetic purchase order. It shows four stages: start with an empty workspace, create a customer during order entry, review and confirm the order, and see the saved order with 0 of 4 lines linked to the item catalog.
+
+The capture used the installed Windows preview, build `26e4bb90445db734`, with a new temporary PostgreSQL database, object directory and synthetic account. No existing business database or customer documents were used. The existing README capture script was limited to the first-order flow; the packaged application and its UI were not changed for the recording.
+
+RapidOCR returned **0 item rows** for this sample. The four rows were entered through the UI from the original before confirmation. The recording follows the manual review path; it does not show OCR automatically producing four correct rows. Waiting and some field-by-field entry are omitted. This result describes this synthetic sample only, not recognition accuracy on other documents.
+
+The GIF is 960×720, 24 seconds, 144 frames and approximately 2.5 MB. Four excerpts play at 0.5× speed for 6, 5.5, 5 and 7.5 seconds. This is an edited demonstration, not a completion-time measurement. English captions sit above a crop of the real product recording; no product labels or business results were redrawn.
+
+The recording completed with no browser runtime errors, unexpected HTTP failures or observed external requests. The saved order had four lines and the item catalog was still empty. The recording's local server and database were stopped afterward. Raw video, extraction results, correction records and capture receipts are retained locally; private runtime configuration is not part of the source repository.

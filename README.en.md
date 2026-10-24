@@ -7,7 +7,7 @@
 <h1 align="center">FactoryFlow</h1>
 
 <p align="center">
-  <strong>Orders, deliveries and customer reconciliation for small factories.</strong><br>
+  <strong>Orders, deliveries and customer statements for small manufacturers.</strong><br>
   Built with direct involvement from frontline factory staff. An earlier version is in daily factory use.<br>
   Start with your first order, no setup imports. Your data and OCR stay on your own computer.
 </p>
@@ -20,10 +20,18 @@
 </p>
 
 <p align="center">
-  <a href="#download-and-try">Download</a> · <a href="#how-an-order-moves">How it works</a>
+  <a href="#download-and-try">Download</a> · <a href="#how-an-order-moves">How it works</a> · <a href="#custom-features-and-new-modules">Custom features</a>
 </p>
 
-![First run: drop in a customer's order or enter it by hand; no customer directory or item catalog is required in advance. Synthetic demo.](docs/images/readme/en-01-first-run.png)
+![Start with one order: create a customer, review against the original and confirm. English UI; synthetic demo.](docs/images/readme/en-first-order.gif)
+
+<p align="center"><sub>Synthetic demo, 0.5× excerpts. Item rows were entered manually after OCR; waiting and some edits are omitted. <a href="docs/README-SCREENSHOTS.md#english-first-order-gif">Capture notes</a></sub></p>
+
+## Who it's for
+
+FactoryFlow is for small factory owners and the office staff who handle customer orders, coordinate deliveries and prepare customer statements. Keep track of what was ordered, what has been delivered, what is still outstanding, and what the customer has accepted.
+
+It may also suit a trading business that only needs customer orders, partial deliveries and reconciliation. Supplier purchasing, inventory and margin reporting are not included.
 
 ## Why it works this way
 
@@ -56,11 +64,7 @@ You do not need to install Python, a database or Node.js. The [offline guide](do
 
 ## How an order moves
 
-**1. Take the order.** Upload a photo, screenshot or PDF and check the extracted lines next to the original, or enter the order by hand. Here is the whole flow in the Chinese UI:
-
-![Start with one order: create a customer inline, review against the source, then confirm — synthetic demo, Chinese UI](docs/images/readme/zh-first-order.gif)
-
-<sub>Chinese UI; synthetic demo at 0.5× speed, with recognition waiting and parts of manual review omitted. <a href="docs/README-SCREENSHOTS.md">Capture notes</a></sub>
+**1. Take the order.** Upload a photo, screenshot or PDF and check the extracted lines next to the original, or enter the order by hand.
 
 ![Four lines manually reviewed against the source; confirmation is still required — synthetic demo](docs/images/readme/en-02b-manually-reviewed.png)
 
@@ -86,6 +90,12 @@ You do not need to install Python, a database or Node.js. The [offline guide](do
 - **CNY only.** Customer acceptance and finalized statements do not mean payment was received, and statements and delivery notes are not tax invoices. No inventory, payments, multiple currencies or foreign tax.
 - The UI supports Simplified Chinese and English, and so do the built-in statement Excel and delivery printing. Customer names, item codes and source text stay as written, customer templates keep their wording, and archived delivery copies currently use the Chinese layout.
 - Backups and exports contain business information; keep them private. See the [distribution notes](docs/DISTRIBUTION.md) for build inputs and third-party materials.
+
+## Custom features and new modules
+
+For inventory or other features tailored to your workflow, [get in touch](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml). Tell me who will use it, how you handle the work today, and what you need it to do. We can discuss the scope from there.
+
+For now, use the GitHub feature request form to start the conversation. Keep public posts to a general description; leave out real customer documents and sensitive business information.
 
 ## Develop from source
 
