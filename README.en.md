@@ -1,3 +1,5 @@
+<p align="center"><a href="README.md">简体中文</a> · <strong>English</strong></p>
+
 <p align="center">
   <img src="docs/images/logo.svg" width="72" height="72" alt="">
 </p>
@@ -18,7 +20,7 @@
 </p>
 
 <p align="center">
-  <a href="#download-and-try">Download</a> · <a href="#how-an-order-moves">How it works</a> · <a href="README.md">简体中文</a>
+  <a href="#download-and-try">Download</a> · <a href="#how-an-order-moves">How it works</a>
 </p>
 
 ![First run: drop in a customer's order or enter it by hand; no customer directory or item catalog is required in advance. Synthetic demo.](docs/images/readme/en-01-first-run.png)
