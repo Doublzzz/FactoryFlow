@@ -32,6 +32,7 @@ class AdjustmentInput(StrictDTO):
 
 class DraftInput(StrictDTO):
     customer_id: UUID
+    currency: Literal["CNY", "USD"] = "CNY"
     period_start: str = Field(min_length=10, max_length=10)
     period_end: str = Field(min_length=10, max_length=10)
     tax_mode: TaxMode
@@ -85,7 +86,7 @@ class StatementSource(StrictDTO):
     quantity_policy: StatementUnitPolicy
     source_unit_price: str | None
     source_amount: str | None
-    currency: Literal["CNY"]
+    currency: Literal["CNY", "USD"]
 
 
 class StatementCandidate(StatementSource):
@@ -139,6 +140,7 @@ class StatementApprovalRef(StrictDTO):
 
 class StatementDetail(StrictDTO):
     id: UUID
+    currency: Literal["CNY", "USD"] = "CNY"
     customer_id: UUID
     customer_name: str
     period_start: str
@@ -229,9 +231,10 @@ def candidates(
     statement_id: UUID | None = None,
     cursor: Annotated[str | None, Query(max_length=80)] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    currency: Literal["CNY", "USD"] = "CNY",
 ):
     return services(request).statements.candidates(
-        actor, customer_id, period_start, period_end, cursor, limit, statement_id
+        actor, customer_id, period_start, period_end, cursor, limit, statement_id, currency
     )
 
 

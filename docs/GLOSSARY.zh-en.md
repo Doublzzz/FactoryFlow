@@ -1,6 +1,6 @@
 # 中英文术语表 / Chinese–English glossary
 
-本表固定产品文案含义；不翻译用户录入的客户名、料号、品名、备注、原件及客户模板文字。英文不改变 CNY、数量单位规范值或现有业务规则。
+本表固定产品文案含义；不翻译用户录入的客户名、料号、品名、备注、原件及客户模板文字。界面语言不改变订单币种、数量单位规范值或现有业务规则。
 
 | 中文 | English | 含义 / Boundary |
 |---|---|---|
@@ -40,7 +40,7 @@
 | 含税价，不另加税 | Tax included | 现有计算模式，不另加税额 |
 | 未税最终价，不另加税 | No additional tax | 现有最终价模式，不声称海外免税资格 |
 | 未税价，另加税 | Add tax | 按显式税率计算，不推断地区税法 |
-| 对账币种 | Reconciliation currency | 当前只支持 CNY |
+| 对账币种 | Reconciliation currency | CNY 或 USD；不同币种分别对账，不换算、不合计 |
 | 客户模板 | Customer template | 用户上传并人工映射的 Excel 模板 |
 | 文件整理 | Working files | 工作副本整理；不替代数据库与原文件备份 |
 | 历史版本 | Historical version | 固定的早期证据，不随语言切换重写 |

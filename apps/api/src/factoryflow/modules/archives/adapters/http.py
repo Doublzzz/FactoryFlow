@@ -55,6 +55,7 @@ class ArchiveSelection(StrictDTO):
 
 class ArchivePreviewRequest(StrictDTO):
     rule: Rule
+    locale: Literal["zh-CN", "en"] = "zh-CN"
     selections: list[ArchiveSelection] = Field(min_length=1, max_length=50)
 
 
@@ -76,6 +77,7 @@ class ArchivePreview(StrictDTO):
 
 class ArchiveBatch(StrictDTO):
     id: str
+    locale: Literal["zh-CN", "en"] = "zh-CN"
     rule: Rule
     status: Literal["pending", "failed", "ready"]
     current: bool
@@ -124,7 +126,7 @@ def sources(
 @router.post("/archives/preview", operation_id="previewArchive", response_model=ArchivePreview)
 def preview(body: ArchivePreviewRequest, request: Request, actor: CurrentActor):
     return services(request).archives.preview(
-        actor, body.rule, [i.model_dump() for i in body.selections]
+        actor, body.rule, [i.model_dump() for i in body.selections], body.locale
     )
 
 
@@ -138,6 +140,7 @@ def create(
         body.rule,
         [i.model_dump() for i in body.selections],
         body.preview_token,
+        body.locale,
     )
 
 

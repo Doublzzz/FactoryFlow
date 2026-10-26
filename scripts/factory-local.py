@@ -37,6 +37,11 @@ WEB = PROJECT / "apps/web/dist"
 OCR_PYTHON = PROJECT / "runtime/ocr/python.exe"
 KIND = "factoryflow-business-v1"
 FLAGS = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+LANGUAGE = "zh-CN"
+
+
+def tr(chinese, english):
+    return english if LANGUAGE == "en" else chinese
 
 
 class LocalError(ValueError):
@@ -239,7 +244,12 @@ def owned(path):
     if root.parent != (BASE / "environments").resolve() or not re.fullmatch(
         "[a-f0-9]{32}", root.name
     ):
-        raise LocalError("不属于 FactoryFlow 的业务数据目录，未进行操作。")
+        raise LocalError(
+            tr(
+                "不属于 FactoryFlow 的业务数据目录，未进行操作。",
+                "This data directory does not belong to FactoryFlow. No operation was performed.",
+            )
+        )
     for name in (
         "owner.json",
         "private-state.json",
@@ -252,7 +262,12 @@ def owned(path):
     ):
         direct(root / name)
     if read(root / "owner.json") != {"kind": KIND, "id": root.name}:
-        raise LocalError("业务数据目录标记不匹配，未进行操作。")
+        raise LocalError(
+            tr(
+                "业务数据目录标记不匹配，未进行操作。",
+                "The business data directory marker does not match. No operation was performed.",
+            )
+        )
     return root
 
 
@@ -275,7 +290,12 @@ def environment(root):
         )
         or state["port"] == state["api_port"]
     ):
-        raise LocalError("本机业务配置不匹配，未进行操作。")
+        raise LocalError(
+            tr(
+                "本机业务配置不匹配，未进行操作。",
+                "The local business configuration does not match. No operation was performed.",
+            )
+        )
     runtime_url = admin.set(
         drivername="postgresql+psycopg",
         database="factoryflow_business",
@@ -336,14 +356,29 @@ def status(root):
 
 def start(root):
     if not (WEB / "index.html").is_file():
-        raise LocalError("网页文件不完整，请重新解压完整安装包。")
+        raise LocalError(
+            tr(
+                "网页文件不完整，请重新解压完整安装包。",
+                "Web files are incomplete. Extract the complete installation bundle again.",
+            )
+        )
     before = status(root)
     if before["ready"]:
         if before["restart_required"]:
-            raise LocalError("请先运行“停止工厂软件”，再启动新版本。")
+            raise LocalError(
+                tr(
+                    "请先运行“停止工厂软件”，再启动新版本。",
+                    "Run Stop FactoryFlow before starting the new version.",
+                )
+            )
         return before
     if before["api_owned"]:
-        raise LocalError("已有程序尚未就绪，请先停止再启动；业务数据仍保留。")
+        raise LocalError(
+            tr(
+                "已有程序尚未就绪，请先停止再启动；业务数据仍保留。",
+                "The program is not ready. Stop it and start again; business data is retained.",
+            )
+        )
     _, state = environment(root)
     available(state["api_port"])
     database_start(root)
@@ -363,6 +398,8 @@ def start(root):
                 str(root),
                 "--data-root",
                 str(BASE),
+                "--language",
+                LANGUAGE,
             ],
             cwd=PROJECT,
             stdin=subprocess.DEVNULL,
@@ -376,7 +413,12 @@ def start(root):
             if result["api_owned"]:
                 return result
         time.sleep(0.2)
-    raise LocalError("启动未完成；业务数据保留。请查看数据目录中的 server.log。")
+    raise LocalError(
+        tr(
+            "启动未完成；业务数据保留。请查看数据目录中的 server.log。",
+            "Startup failed; business data is retained. Check server.log in the data directory.",
+        )
+    )
 
 
 def serve(root):
@@ -452,22 +494,40 @@ def new_cluster(api_port=None):
                 pg("pg_ctl", "-D", root / "pgdata", "-m", "fast", "-w", "stop")
         except Exception:
             raise LocalError(
-                f"首次建立未完成，目录 {root.name} 的停止状态需检查；文件已保留。"
+                tr(
+                    f"首次建立未完成，目录 {root.name} 的停止状态需检查；文件已保留。",
+                    f"Initial setup failed. Check whether directory {root.name} is stopped; "
+                    "files were retained.",
+                )
             ) from None
         raise LocalError(
-            f"首次建立未完成，目录 {root.name} 已停止并保留；请检查随包运行库。"
+            tr(
+                f"首次建立未完成，目录 {root.name} 已停止并保留；请检查随包运行库。",
+                f"Initial setup failed. Directory {root.name} was stopped and retained; "
+                "check the bundled runtimes.",
+            )
         ) from None
     return root
 
 
 def prepare(name, username, password):
     if (BASE / "active.json").exists():
-        raise LocalError("业务数据已经存在，请直接启动。首次设置不会覆盖旧数据。")
+        raise LocalError(
+            tr(
+                "业务数据已经存在，请直接启动。首次设置不会覆盖旧数据。",
+                "Business data already exists. Start the app directly; "
+                "initial setup will not overwrite it.",
+            )
+        )
     # Validate before creating the cluster; credentials never enter process arguments or logs.
     if not name.strip() or len(name) > 200 or not username.strip() or len(username) > 100:
-        raise LocalError("工厂名称或账号长度不正确。")
+        raise LocalError(
+            tr("工厂名称或账号长度不正确。", "Factory name or username has an invalid length.")
+        )
     if not 12 <= len(password) <= 128:
-        raise LocalError("密码须为 12 至 128 个字符。")
+        raise LocalError(
+            tr("密码须为 12 至 128 个字符。", "Password must contain 12 to 128 characters.")
+        )
     root = new_cluster()
     try:
         _, state = environment(root)
@@ -555,7 +615,13 @@ def open_browser(url):
         if executable.is_file():
             subprocess.Popen([str(executable), url], creationflags=FLAGS)
             return
-    print("请用 Chrome 或新版 Edge 打开：" + url)
+    print(
+        tr(
+            "请用 Chrome 或新版 Edge 打开：",
+            "Open this address in Chrome or a recent version of Edge: ",
+        )
+        + url
+    )
 
 
 def password_input(prompt):
@@ -564,18 +630,25 @@ def password_input(prompt):
 
 
 def main():
-    global BASE
+    global BASE, LANGUAGE
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["start", "stop", "status", "backup", "restore", "serve"])
     parser.add_argument("--data-root", type=Path)
     parser.add_argument("--root", type=Path)
     parser.add_argument("--backup", type=Path)
     parser.add_argument("--no-browser", action="store_true")
+    parser.add_argument("--language", choices=["zh-CN", "en"], default="zh-CN")
     args = parser.parse_args()
+    LANGUAGE = args.language
     if args.data_root:
         BASE = direct(args.data_root)
     if os.name != "nt" or sys.getwindowsversion().major < 10 or ctypes.sizeof(ctypes.c_void_p) != 8:
-        raise LocalError("此安装包需要 Windows 10/11 64 位系统。")
+        raise LocalError(
+            tr(
+                "此安装包需要 Windows 10/11 64 位系统。",
+                "This bundle requires 64-bit Windows 10 or 11.",
+            )
+        )
     if args.action == "serve":
         if not args.root:
             parser.error("serve requires --root")
@@ -584,31 +657,76 @@ def main():
     with maintenance_lock():
         if args.action == "start":
             if not (BASE / "active.json").exists():
-                print("首次使用：建立空白业务库。此后每天直接启动即可。")
-                name = input("工厂名称：").strip()
-                username = input("登录账号：").strip()
-                password = password_input("设置密码（12 字符以上，输入时不显示）：")
-                if password_input("再次输入密码：") != password:
-                    raise LocalError("两次密码不同，尚未建立业务库，请重新启动。")
+                print(
+                    tr(
+                        "首次使用：建立空白业务库。此后每天直接启动即可。",
+                        "First use: set up an empty business database. "
+                        "On later days, simply start the app.",
+                    )
+                )
+                name = input(tr("工厂名称：", "Factory name: ")).strip()
+                username = input(tr("登录账号：", "Username: ")).strip()
+                password = password_input(
+                    tr(
+                        "设置密码（12 字符以上，输入时不显示）：",
+                        "Password (12 to 128 characters; hidden when typed): ",
+                    )
+                )
+                if password_input(tr("再次输入密码：", "Repeat password: ")) != password:
+                    raise LocalError(
+                        tr(
+                            "两次密码不同，尚未建立业务库，请重新启动。",
+                            "Passwords do not match. No database was created; start again.",
+                        )
+                    )
                 prepare(name, username, password)
             result = start(active())
-            print("FactoryFlow 已启动：" + result["url"])
-            print("关闭浏览器不会丢失数据。下班时运行“停止工厂软件”。")
+            print(tr("FactoryFlow 已启动：", "FactoryFlow started: ") + result["url"])
+            print(
+                tr(
+                    "关闭浏览器前请保存录入。下班时运行“停止工厂软件”。",
+                    "Save your work before closing the browser. Run Stop FactoryFlow to finish.",
+                )
+            )
             if not args.no_browser:
-                open_browser(result["url"])
+                open_browser(result["url"] + ("?lang=en" if LANGUAGE == "en" else ""))
         elif args.action == "restore":
-            path = args.backup or Path(input("请粘贴备份文件夹完整路径：").strip().strip('"'))
+            path = args.backup or Path(
+                input(
+                    tr("请粘贴备份文件夹完整路径：", "Paste the full path of the backup folder: ")
+                )
+                .strip()
+                .strip('"')
+            )
             if (
                 not args.backup
-                and input("将恢复到新目录并切换使用，旧数据保留。继续？输入 Y：").upper() != "Y"
+                and input(
+                    tr(
+                        "将恢复到新目录并切换使用，旧数据保留。继续？输入 Y：",
+                        "Restore into a new directory and switch to it, retaining the old data? "
+                        "Type Y to continue: ",
+                    )
+                ).upper()
+                != "Y"
             ):
                 return
             result = restore(path)
-            print("备份已恢复。请运行“启动工厂软件”，用原账号登录。")
+            print(
+                tr(
+                    "备份已恢复。请运行“启动工厂软件”，用原账号登录。",
+                    "Backup restored. Run Start FactoryFlow and use your original account.",
+                )
+            )
         else:
             result = {"stop": stop, "status": status, "backup": backup}[args.action](active())
             if args.action == "backup":
-                print("备份已校验，请将整个文件夹复制到 U 盘：\n" + result["backup"])
+                print(
+                    tr(
+                        "备份已校验，请将整个文件夹复制到 U 盘：\n",
+                        "Backup verified. Copy this entire folder to a USB drive:\n",
+                    )
+                    + result["backup"]
+                )
         print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
@@ -616,9 +734,18 @@ if __name__ == "__main__":
     try:
         main()
     except (LocalError, BusinessError) as error:
-        print("操作未完成：" + (str(error) if isinstance(error, LocalError) else error.code))
+        print(
+            tr("操作未完成：", "Operation did not complete: ")
+            + (str(error) if isinstance(error, LocalError) else error.code)
+        )
         sys.exit(1)
     except Exception:
         # Never emit private database URLs, raw SQL values or credentials into a console traceback.
-        print("操作未完成，数据仍保留。请检查数据目录和安装包是否完整，再联系支持。")
+        print(
+            tr(
+                "操作未完成，数据仍保留。请检查数据目录和安装包是否完整，再联系支持。",
+                "The operation did not complete; data is retained. "
+                "Check the data directory and installation bundle, then contact support.",
+            )
+        )
         sys.exit(1)

@@ -16,7 +16,7 @@ def command(pg, path, body, key=None):
     return response.json()
 
 
-def setup_statement(pg, quantity="100", start="2026-10-01", end="2026-10-31"):
+def setup_statement(pg, quantity="100", start="2026-10-01", end="2026-10-31", currency="CNY"):
     order = command(
         pg,
         "/api/v1/orders",
@@ -24,7 +24,7 @@ def setup_statement(pg, quantity="100", start="2026-10-01", end="2026-10-31"):
             "customer_id": pg.customer_id,
             "order_number": "SYN-LIFE-" + uuid4().hex,
             "business_date": "2026-10-01",
-            "currency": "CNY",
+            "currency": currency,
             "lines": [
                 {
                     "description": "Synthetic lifecycle part",
@@ -55,6 +55,7 @@ def setup_statement(pg, quantity="100", start="2026-10-01", end="2026-10-31"):
         "/api/v1/statements",
         {
             "customer_id": pg.customer_id,
+            "currency": currency,
             "period_start": start,
             "period_end": end,
             "tax_mode": "untaxed_final",
@@ -143,12 +144,13 @@ def settle(pg, statement):
     )
 
 
-def blank(pg, start, end):
+def blank(pg, start, end, currency="CNY"):
     return command(
         pg,
         "/api/v1/statements",
         {
             "customer_id": pg.customer_id,
+            "currency": currency,
             "period_start": start,
             "period_end": end,
             "tax_mode": "untaxed_final",
@@ -159,8 +161,9 @@ def blank(pg, start, end):
     )
 
 
-def test_two_period_recognition_review_and_formal_history(pg):
-    statement, source, sent, feedback = setup_statement(pg)
+@pytest.mark.parametrize("currency", ["CNY", "USD"])
+def test_two_period_recognition_review_and_formal_history(pg, currency):
+    statement, source, sent, feedback = setup_statement(pg, currency=currency)
     approval = approve(pg, statement, source, sent, feedback)
     review = command(
         pg,
@@ -175,7 +178,7 @@ def test_two_period_recognition_review_and_formal_history(pg):
     reserve(pg, statement, approval, "60")
     first = settle(pg, statement)
     assert first["status"] == "confirmed" and first["calculation"]["total"] == "600.00"
-    following = blank(pg, "2026-11-01", "2026-11-30")
+    following = blank(pg, "2026-11-01", "2026-11-30", currency)
     target = {
         "expected_version": approval["version"],
         "target_start": "2026-11-01",
@@ -196,7 +199,7 @@ def test_two_period_recognition_review_and_formal_history(pg):
         assert conn.execute(
             text("SELECT sum(claimed) FROM statement_balances")
         ).scalar_one() == Decimal(90)
-    third = blank(pg, "2026-12-01", "2026-12-31")
+    third = blank(pg, "2026-12-01", "2026-12-31", currency)
     command(
         pg,
         f"/api/v1/statements/{third['id']}/claim-review",
@@ -483,8 +486,9 @@ def test_preview_replay_correction_and_late_audit_rollback(pg, monkeypatch):
     assert settle(pg, statement)["calculation"]["total"] == "600.00"
 
 
-def test_formal_simple_correction_keeps_old_event_and_explicit_quantity_destination(pg):
-    statement, source, sent, feedback = setup_statement(pg)
+@pytest.mark.parametrize("currency", ["CNY", "USD"])
+def test_formal_simple_correction_keeps_old_event_and_explicit_quantity_destination(pg, currency):
+    statement, source, sent, feedback = setup_statement(pg, currency=currency)
     approval = approve(pg, statement, source, sent, feedback, "100")
     allocation = reserve(pg, statement, approval, "100")
     first = settle(pg, statement)
@@ -509,6 +513,7 @@ def test_formal_simple_correction_keeps_old_event_and_explicit_quantity_destinat
     assert preview["calculation"]["total"] == "900.00"
     assert revised["correction"]["evidence_id"] == feedback["id"]
     assert revised["calculation"]["total"] == "900.00"
+    assert revised["currency"] == currency
     assert revised["history"][-2]["snapshot"]["calculation"]["total"] == "1000.00"
     assert len(revised["settlement_lines"]) == 1
     with pg.owner.connect() as conn:

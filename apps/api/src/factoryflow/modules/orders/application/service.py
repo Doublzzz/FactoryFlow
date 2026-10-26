@@ -165,6 +165,8 @@ class OrderService:
             self.require_version(current, expected)
             if current["status"] != "active":
                 raise BusinessError("ORDER_NOT_ACTIVE", 409)
+            if order.currency != current["currency"]:
+                raise BusinessError("ORDER_CURRENCY_IMMUTABLE", 409)
             if (
                 str(order.customer_id) != current["customer_id"]
                 or order.order_number != current["order_number"]

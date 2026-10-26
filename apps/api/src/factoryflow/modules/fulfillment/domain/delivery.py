@@ -14,9 +14,11 @@ class DeliveryInput:
     expected_version: int
     delivery_date: date
     quantities: dict[str, str]
+    inventory_mode: str = "sync"
+    confirm_inventory_shortage: bool = False
 
     def payload(self):
-        return {
+        result = {
             "order_id": str(self.order_id),
             "customer_id": str(self.customer_id),
             "revision_id": str(self.revision_id),
@@ -24,6 +26,12 @@ class DeliveryInput:
             "delivery_date": self.delivery_date.isoformat(),
             "quantities": self.quantities,
         }
+        # Default values preserve pre-inventory command fingerprints and successful replays.
+        if self.inventory_mode != "sync":
+            result["inventory_mode"] = self.inventory_mode
+        if self.confirm_inventory_shortage:
+            result["confirm_inventory_shortage"] = True
+        return result
 
 
 def prepare_delivery(payload):
@@ -41,6 +49,10 @@ def prepare_delivery(payload):
         if not isinstance(lines, list) or not 1 <= len(lines) <= 200:
             raise ValueError
         quantities = {}
+        mode = payload.get("inventory_mode", "sync")
+        shortage = payload.get("confirm_inventory_shortage", False)
+        if mode not in {"sync", "skip"} or type(shortage) is not bool:
+            raise ValueError
         for line in lines:
             identifier = str(UUID(str(line["order_line_id"])))
             quantity = confirm_quantity(line["quantity"], None)
@@ -54,6 +66,8 @@ def prepare_delivery(payload):
             expected,
             business_date,
             dict(sorted(quantities.items())),
+            mode,
+            shortage,
         )
     except (KeyError, TypeError, ValueError) as error:
         # QuantityError keeps its stable code at the API boundary.

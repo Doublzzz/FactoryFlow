@@ -1,6 +1,6 @@
 # FactoryFlow execution contract
 
-Read README.md, docs/PRODUCT-SPEC.md and relevant source before changing behavior. The current request defines scope. Do not resume planned inventory, overseas finance or publication work without authorization.
+Read README.md, docs/STATUS.md, docs/PRODUCT-SPEC.md and relevant source before changing behavior. The current request defines scope. Do not start additional business capabilities, overseas finance or publication work without authorization.
 
 - Check Git status and preserve existing work. Do not automatically commit, push or deploy.
 - Use only synthetic data in source, tests, examples and shared evidence. Do not read or upload runtime databases, credentials, customer files or private local configuration. Do not inspect `.codex/`.

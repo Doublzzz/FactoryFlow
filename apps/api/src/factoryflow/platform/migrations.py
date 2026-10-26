@@ -29,6 +29,15 @@ def upgrade_database(engine, repository_root: Path, runtime_role: str = "ff_runt
         conn.execute(text("GRANT UPDATE(delivered_quantity) ON order_lines TO ff_runtime"))
         conn.execute(text("GRANT UPDATE(material_id) ON order_lines TO ff_runtime"))
         conn.execute(text("GRANT INSERT ON materials,customer_material_codes TO ff_runtime"))
+        conn.execute(
+            text(
+                "GRANT INSERT ON inventory_accounts,inventory_ledger,delivery_inventory_snapshots "
+                "TO ff_runtime"
+            )
+        )
+        # FOR UPDATE needs one UPDATE privilege. The trigger rejects identity and direct
+        # projection writes; balances are changed only by the controlled ledger trigger.
+        conn.execute(text("GRANT UPDATE(material_id) ON inventory_accounts TO ff_runtime"))
         conn.execute(text("REVOKE UPDATE ON materials,customer_material_codes FROM ff_runtime"))
         conn.execute(
             text(

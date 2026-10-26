@@ -191,6 +191,22 @@ def test_normal_renderer_default_remains_external_and_nonce_is_optional():
     assert stable == render_delivery(data, default_layout(), 3, nonce="synthetic-nonce")
 
 
+def test_english_archive_is_self_contained_and_preserves_saved_layout_words():
+    from factoryflow.modules.fulfillment.adapters.archive_renderer import render_archive_delivery
+
+    data = delivery()
+    content = render_archive_delivery(data, default_layout(), 0, locale="en")
+    html = content.decode()
+    assert "Delivery note" in html and "Work file · Snapshot at generation" in html
+    assert "State at generation: Active" in html and REVISION_ID in html
+    assert "Source confirmation revision" in html
+    assert "合成客户&lt;script&gt;" in html
+    assert 'src="/delivery-print.js' not in html
+    assert content == render_archive_delivery(data, default_layout(), 0, locale="en")
+    saved = default_layout() | {"title": "用户保留标题"}
+    assert "用户保留标题" in render_archive_delivery(data, saved, 1, locale="en").decode()
+
+
 def test_constructor_does_not_read_script_or_repositories(monkeypatch):
     from pathlib import Path
 
@@ -203,6 +219,32 @@ def test_constructor_does_not_read_script_or_repositories(monkeypatch):
     monkeypatch.setattr(Path, "read_text", forbidden)
     service = ArchiveDeliveries(object(), object(), object(), render_archive_delivery)
     assert service.renderer is render_archive_delivery
+
+
+def test_installed_archive_uses_explicit_bundled_web_script(tmp_path, monkeypatch):
+    from factoryflow.modules.fulfillment.adapters import archive_renderer
+
+    script = tmp_path / "web" / "delivery-print.js"
+    script.parent.mkdir()
+    script.write_text("/* synthetic bundled paginator */", encoding="utf-8")
+    monkeypatch.setattr(
+        archive_renderer,
+        "__file__",
+        str(
+            tmp_path
+            / "runtime/python/Lib/site-packages/factoryflow"
+            / "modules/fulfillment/adapters/archive_renderer.py"
+        ),
+    )
+    content = archive_renderer.render_archive_delivery(
+        delivery(),
+        default_layout(),
+        0,
+        locale="en",
+        script_path=script,
+    ).decode()
+    assert "synthetic bundled paginator" in content
+    assert "Delivery note" in content
 
 
 def test_currentity_does_not_depend_on_rendering_and_preview_bytes_detect_code_changes(monkeypatch):

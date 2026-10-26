@@ -6,6 +6,7 @@ from conftest import ROOT
 from factoryflow.bootstrap import build_services
 from factoryflow.platform.backup import restore_backup
 from factoryflow.platform.config import Settings
+from factoryflow.platform.database import REVISION
 from sqlalchemy.engine import make_url
 from test_archive_migration import BINARY, owned_database
 from test_postgres_material_import import confirm, mapped, preview
@@ -25,7 +26,7 @@ def test_imported_catalog_and_original_command_recover_with_numbering(pg, tmp_pa
     before = pg.runtime.materials.list(pg.actor)
     codes = pg.runtime.materials.codes(pg.actor)
     backup = tmp_path / "m2-backup"
-    assert pg.runtime.backup(backup, BINARY)["schema_revision"] == "0013_material_pool"
+    assert pg.runtime.backup(backup, BINARY)["schema_revision"] == REVISION
     with owned_database(pg, "ff_m2_restore_") as (name, admin):
         objects = tmp_path / "recovered-objects"
         restore_backup(

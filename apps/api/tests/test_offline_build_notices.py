@@ -69,6 +69,7 @@ def package_inputs(tmp_path, monkeypatch):
     write(source / "scripts/factory-local.py", "# synthetic entry point\n")
     shutil.copyfile(ROOT / "scripts/install-offline.py", source / "scripts/install-offline.py")
     write(source / "docs/FACTORY-OFFLINE-GUIDE.txt", "Synthetic guide")
+    write(source / "docs/FACTORY-OFFLINE-GUIDE-en.txt", "Synthetic English guide")
     monkeypatch.setattr(builder, "ROOT", source)
     monkeypatch.setattr(
         builder, "sys", SimpleNamespace(base_prefix=primary, prefix=primary, version="3.14.7")
@@ -116,6 +117,18 @@ def test_notices_are_hashed_archived_and_installed(package_inputs, tmp_path):
     for relative, source in expected.items():
         assert manifest["files"][relative] == inputs.builder.digest(source)
     assert (inputs.output / "LICENSE").read_bytes() == (app / "LICENSE").read_bytes()
+    assert (inputs.output / "Read me.txt").read_text(encoding="utf-8") == "Synthetic English guide"
+    assert "--language en" in (inputs.output / "Install.cmd").read_text(encoding="utf-8")
+    for name, action in (
+        ("Start FactoryFlow", "start"),
+        ("Stop FactoryFlow", "stop"),
+        ("Back Up Data", "backup"),
+        ("Restore Backup", "restore"),
+        ("Check Status", "status"),
+    ):
+        entry = app / (name + ".cmd")
+        assert f"{action} --language en" in entry.read_text(encoding="utf-8")
+        assert entry.name in manifest["files"]
     assert not (app / "unrelated-private.txt").exists()
     assert not (app / "third-party/unrelated-private.txt").exists()
     assert (app / "apps/web/dist/index.html").read_bytes() == (

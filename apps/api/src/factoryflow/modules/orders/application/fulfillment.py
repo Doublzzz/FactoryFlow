@@ -20,7 +20,7 @@ class FulfillmentOrders:
             raise BusinessError("ORDER_NOT_ACTIVE", 409)
         if current["customer_id"] != str(customer_id) or current["revision_id"] != str(revision_id):
             raise BusinessError("DELIVERY_SOURCE_CONFLICT", 409)
-        lines = {line["id"]: line for line in self.repository.lines(actor, revision_id)}
+        lines = {line["id"]: line for line in self.repository.material_lines(actor, revision_id)}
         result = []
         for identifier, quantity in quantities.items():
             line = lines.get(identifier)

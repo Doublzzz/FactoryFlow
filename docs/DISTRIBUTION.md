@@ -27,6 +27,8 @@ The PostgreSQL root must contain bin/lib/share and the upstream COPYING file. Th
 
 Extract the ZIP to a new directory. Read the original Microsoft runtime conditions before running the bundled Python with `-I -X utf8 install.py --destination <new-directory> --no-shortcuts --accept-third-party-terms`. That flag is for explicit automated acceptance; interactive installation displays the original text and requires Y. Refusal or EOF makes no installation or shortcut.
 
+For English, use `Install.cmd` interactively or add `--language en` to the command above. `Read me.txt` describes English setup and daily operation. Chinese entry points and `使用说明.txt` remain available. See [verification](VERIFICATION.md) for the candidate build's actual installation checks, runtime comparison and remaining limits.
+
 Run `scripts/verify-offline-package.py --app <installed-program> --root <new-synthetic-check-directory>` using only the installed Python. It checks first setup, order/delivery/statement/Excel, packaged OCR, restart and backup/restore. Use new synthetic directories only. Keep passwords, private runtime config, logs and databases outside release artifacts.
 
 The FFmpeg omission is additionally checked with cold independent runtimes on PNG, JPEG and a two-page PDF. All result fields, including text, geometry, previews and CPU/model metadata, must agree before and after. This establishes the tested still-image/PDF behavior, not video support or real-document OCR accuracy.

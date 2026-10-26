@@ -31,7 +31,8 @@ def _contents(files: dict[str, bytes], manifest: dict) -> dict[str, bytes]:
     if len(files) > 50:
         raise BusinessError("ARCHIVE_PATH_INVALID")
     result = dict(files)
-    seen = {_MANIFEST.casefold()}
+    manifest_name = "manifest.json" if manifest.get("locale") == "en" else _MANIFEST
+    seen = {manifest_name.casefold()}
     directories = set()
     directory_names = {}
     for name, content in files.items():
@@ -59,7 +60,7 @@ def _contents(files: dict[str, bytes], manifest: dict) -> dict[str, bytes]:
                 raise BusinessError("ARCHIVE_PATH_INVALID")
     if seen & directories:
         raise BusinessError("ARCHIVE_PATH_INVALID")
-    result[_MANIFEST] = canonical_json(manifest)
+    result[manifest_name] = canonical_json(manifest)
     if sum(map(len, result.values())) > _LIMIT:
         raise BusinessError("ARCHIVE_PATH_INVALID")
     return result

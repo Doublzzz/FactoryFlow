@@ -314,6 +314,8 @@ class StatementLifecycle:
     def claim_review(self, work, actor, current, body):
         review = work.lifecycle.get(actor, "reviews", body["review_id"])
         StatementService.require_version(review, body["review_version"])
+        if review["source"].get("currency", "CNY") != current.get("currency", "CNY"):
+            raise BusinessError("STATEMENT_CURRENCY_MISMATCH", 409)
         if (
             review["customer_id"] != current["customer_id"]
             or review["source"]["delivery_date"] > current["period_end"]
@@ -364,6 +366,8 @@ class StatementLifecycle:
     def reserve(self, work, actor, current, body):
         approval = work.lifecycle.get(actor, "approvals", body["approval_id"])
         StatementService.require_version(approval, body["approval_version"])
+        if approval["source"].get("currency", "CNY") != current.get("currency", "CNY"):
+            raise BusinessError("STATEMENT_CURRENCY_MISMATCH", 409)
         if approval["customer_id"] != current["customer_id"] or (
             approval["target_start"],
             approval["target_end"],

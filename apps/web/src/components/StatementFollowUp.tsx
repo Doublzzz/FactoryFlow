@@ -66,7 +66,7 @@ export function StatementFollowUp({ customerId, disabled, onOpen }: {
               <strong className="remaining">{t("待选{0} {1}", [(row.available_quantity) ?? "", (unit) ?? ""])}</strong>
               <small>{t("已选待正式结算：{0} {1}", [(row.reserved_quantity) ?? "", (unit) ?? ""])}</small>
               <small>{t("已正式结算：{0} {1}", [(row.settled_quantity) ?? "", (unit) ?? ""])}</small>
-              <small>{t("认可单价：{0} 元 /{1}", [(row.unit_price) ?? "", (unit) ?? ""])}</small>
+              <small>{t("认可单价：{0} {1} / {2}", [row.unit_price, row.source.currency, unit])}</small>
             </> : <strong className="remaining">{row.remaining_quantity} {unit}</strong>}</td>
             <td>{"target_start" in row && <p className="follow-up-period">{t("{0} 至{1}", [(row.target_start) ?? "", (row.target_end) ?? ""])}</p>}
               <span>{row.reason || t("未填写原因")}</span></td>

@@ -8,29 +8,51 @@ from sqlalchemy import text
 
 class DeliveryRepository:
     def settlement_sources(self, actor, customer_id, end_date, cursor, limit):
-        params = {"org": actor.organization_id, "customer": customer_id,
-                  "end": end_date, "limit": limit + 1}
+        params = {
+            "org": actor.organization_id,
+            "customer": customer_id,
+            "end": end_date,
+            "limit": limit + 1,
+        }
         condition = ""
         if cursor:
             try:
                 delivery, line = cursor.split(":")
                 params.update(delivery=UUID(delivery), line=UUID(line))
-            except (ValueError, AttributeError):
+            except ValueError, AttributeError:
                 raise BusinessError("INVALID_CURSOR") from None
             condition = " AND (d.id,dl.order_line_id)>(:delivery,:line)"
-        rows = list(self.conn.execute(text(
-            "SELECT dl.*,d.customer_id,d.delivery_date FROM deliveries d JOIN delivery_lines dl "
-            "ON d.organization_id=dl.organization_id AND d.id=dl.delivery_id "
-            "WHERE d.organization_id=:org AND d.customer_id=:customer AND d.status='active' "
-            "AND d.delivery_date<=:end" + condition + " ORDER BY d.id,dl.order_line_id LIMIT :limit"
-        ), params).mappings())
+        rows = list(
+            self.conn.execute(
+                text(
+                    "SELECT dl.*,d.customer_id,d.delivery_date "
+                    "FROM deliveries d JOIN delivery_lines dl "
+                    "ON d.organization_id=dl.organization_id AND d.id=dl.delivery_id "
+                    "WHERE d.organization_id=:org AND d.customer_id=:customer "
+                    "AND d.status='active' "
+                    "AND d.delivery_date<=:end"
+                    + condition
+                    + " ORDER BY d.id,dl.order_line_id LIMIT :limit"
+                ),
+                params,
+            ).mappings()
+        )
         more, rows = len(rows) > limit, rows[:limit]
-        items = [{key: (str(value) if isinstance(value, (UUID, Decimal)) else value)
-                  for key, value in row.items()} for row in rows]
+        items = [
+            {
+                key: (str(value) if isinstance(value, (UUID, Decimal)) else value)
+                for key, value in row.items()
+            }
+            for row in rows
+        ]
         for item in items:
             item["delivery_date"] = item["delivery_date"].isoformat()
-        return {"items": items, "next_cursor":
-                f"{rows[-1]['delivery_id']}:{rows[-1]['order_line_id']}" if more else None}
+        return {
+            "items": items,
+            "next_cursor": f"{rows[-1]['delivery_id']}:{rows[-1]['order_line_id']}"
+            if more
+            else None,
+        }
 
     def __init__(self, conn):
         self.conn = conn
@@ -90,7 +112,40 @@ class DeliveryRepository:
             "voided_at": row["voided_at"].isoformat() if row["voided_at"] else None,
         }
 
-    def get(self, actor, identifier, lock=False):
+    def inventory_snapshots(self, actor, identifier, snapshots):
+        for line_id, snapshot in snapshots.items():
+            self.conn.execute(
+                text("""INSERT INTO delivery_inventory_snapshots
+                (organization_id,delivery_id,order_line_id,state,material_id,canonical_unit,
+                 quantity,movement_id,reason,mode,shortage_confirmed)
+                VALUES(:org,:delivery,:line,:state,:material_id,:canonical_unit,:quantity,
+                       :movement_id,:reason,:mode,:shortage_confirmed)"""),
+                {
+                    "org": actor.organization_id,
+                    "delivery": identifier,
+                    "line": line_id,
+                    **snapshot,
+                },
+            )
+
+    @staticmethod
+    def inventory_view(line):
+        if line["inventory_state"] is None:
+            return None
+        return {
+            "state": line["inventory_state"],
+            "material_id": str(line["inventory_material_id"])
+            if line["inventory_material_id"]
+            else None,
+            "canonical_unit": line["canonical_unit"],
+            "quantity": format(line["quantity"], "f"),
+            "movement_id": str(line["movement_id"]) if line["movement_id"] else None,
+            "reason": line["inventory_reason"],
+            "mode": line["inventory_mode"],
+            "shortage_confirmed": line["shortage_confirmed"],
+        }
+
+    def get(self, actor, identifier, lock=False, *, inventory=False):
         row = (
             self.conn.execute(
                 text(
@@ -104,10 +159,34 @@ class DeliveryRepository:
         )
         if row is None:
             raise BusinessError("DELIVERY_NOT_FOUND", 404)
+        # Inventory is a delivery-detail projection. Public settlement/archive sources
+        # retain their original shape, including when constructing legacy migration fixtures.
+        inventory_columns = (
+            (
+                ",s.state AS inventory_state,s.material_id AS inventory_material_id,"
+                "s.movement_id,s.reason AS inventory_reason,s.mode AS inventory_mode,"
+                "s.shortage_confirmed"
+            )
+            if inventory
+            else ""
+        )
+        inventory_join = (
+            (
+                " LEFT JOIN delivery_inventory_snapshots s "
+                "ON s.organization_id=l.organization_id AND s.delivery_id=l.delivery_id "
+                "AND s.order_line_id=l.order_line_id"
+            )
+            if inventory
+            else ""
+        )
         lines = self.conn.execute(
             text(
-                "SELECT * FROM delivery_lines WHERE organization_id=:org "
-                "AND delivery_id=:id ORDER BY line_number"
+                "SELECT l.*"
+                + inventory_columns
+                + " FROM delivery_lines l"
+                + inventory_join
+                + " WHERE l.organization_id=:org "
+                "AND l.delivery_id=:id ORDER BY l.line_number"
             ),
             {"org": actor.organization_id, "id": identifier},
         ).mappings()
@@ -122,6 +201,7 @@ class DeliveryRepository:
                     "source_unit": line["source_unit"],
                     "canonical_unit": line["canonical_unit"],
                     "quantity_policy": line["quantity_policy"],
+                    **({"inventory": self.inventory_view(line)} if inventory else {}),
                 }
                 for line in lines
             ],

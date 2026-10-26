@@ -26,6 +26,7 @@ def render_excel(snapshot, template_content=None):
     if snapshot["template_id"] not in TEMPLATES or snapshot["template_version"] != 1:
         raise ValueError("Unsupported immutable layout version")
     data = snapshot["statement"]
+    currency = data.get("currency", "CNY")
     formal = data.get("status", "draft") == "confirmed"
     label = text("正式", "Final") if formal else text("草稿", "Draft")
     status_label = label
@@ -89,9 +90,9 @@ def render_excel(snapshot, template_content=None):
         1,
         10,
         text(
-            f"期间：{data['period_start']} 至 {data['period_end']}    币种：CNY"
+            f"期间：{data['period_start']} 至 {data['period_end']}    币种：{currency}"
             f"    {label}版本：{data['version']}",
-            f"Period: {data['period_start']} to {data['period_end']}    Currency: CNY"
+            f"Period: {data['period_start']} to {data['period_end']}    Currency: {currency}"
             f"    {label} version: {data['version']}",
         ),
     )
@@ -259,7 +260,7 @@ def render_excel(snapshot, template_content=None):
         (text("已定价小计", "Priced subtotal"), "priced_subtotal"),
         (text("计税基数", "Tax base"), "tax_base"),
         (text("税额", "Tax amount"), "tax_amount"),
-        (text("最终金额（CNY）", "Total (CNY)"), "total"),
+        (text(f"最终金额（{currency}）", f"Total ({currency})"), "total"),
     ]:
         merged(row, 1, 9, label, True).alignment = Alignment(
             vertical="center", horizontal="right", wrap_text=True

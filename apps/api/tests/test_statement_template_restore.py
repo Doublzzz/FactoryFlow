@@ -14,6 +14,7 @@ from factoryflow.platform.backup import restore_backup, validate_backup
 from factoryflow.platform.config import Settings
 from factoryflow.platform.database import REVISION, engine_for
 from factoryflow.platform.migrations import upgrade_database
+from legacy_delivery import create_legacy_delivery
 from psycopg import sql
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
@@ -28,9 +29,9 @@ def seed_legacy_business(runtime, actor, customer_id):
     """Frozen pre-0012 statement columns; current services must not write old schemas."""
     confirmed = runtime.orders.confirm(actor, uuid4(), payload() | {"customer_id": customer_id})
     order = runtime.orders.detail(actor, confirmed["order_id"])
-    delivery = runtime.deliveries.create(
+    delivery = create_legacy_delivery(
+        runtime,
         actor,
-        uuid4(),
         {
             "order_id": confirmed["order_id"],
             "customer_id": customer_id,
@@ -140,8 +141,13 @@ def seed_legacy_business(runtime, actor, customer_id):
         work.journal.audit(actor, "statement.create", identifier)
         work.journal.finish(actor, "statement.create", key, statement)
     assert runtime.statement_exports.generate(actor, export_id)["status"] == "ready"
-    # Only the current DTO projection gains the new optional default after migration.
-    statement = {**statement, "lines": [{**line, "external_document_number": ""} for line in lines]}
+    # Current read defaults do not alter the stored pre-migration snapshots above.
+    statement = {
+        **statement,
+        "currency": "CNY",
+        "lines": [{**line, "external_document_number": ""} for line in lines],
+    }
+    delivery = {**delivery, "lines": [{**line, "inventory": None} for line in delivery["lines"]]}
     return confirmed, delivery, statement, {"id": str(export_id)}
 
 

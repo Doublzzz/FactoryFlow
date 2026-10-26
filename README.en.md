@@ -31,7 +31,7 @@
 
 FactoryFlow is for small factory owners and the office staff who handle customer orders, coordinate deliveries and prepare customer statements. Keep track of what was ordered, what has been delivered, what is still outstanding, and what the customer has accepted.
 
-It may also suit a trading business that only needs customer orders, partial deliveries and reconciliation. Supplier purchasing, inventory and margin reporting are not included.
+It may also suit a trading business that only needs customer orders, partial deliveries and reconciliation. The preview.2 candidate adds optional finished-goods inventory. Supplier purchasing, raw materials, production/BOM and margin reporting are not included.
 
 ## Why it works this way
 
@@ -54,13 +54,17 @@ FactoryFlow was built with direct involvement from frontline factory staff, and 
 
 ## Download and try
 
-For Windows 10/11 x64, download `FactoryFlow-Windows-x64-v0.1.0-preview.1.zip` (about 174 MB) from the [v0.1.0-preview.1 release](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.1).
+**This source is being prepared for v0.1.0-preview.2; it is not released yet.** The candidate adds CNY/USD, an English Windows installation flow and optional finished-goods inventory. See [current status](docs/STATUS.md) for version and verification progress.
+
+The published Windows 10/11 x64 package remains [v0.1.0-preview.1](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.1): download `FactoryFlow-Windows-x64-v0.1.0-preview.1.zip` (about 174 MB). That package supports CNY only and has no finished-goods inventory.
 
 1. Extract the whole ZIP, run `安装.cmd`, and follow the prompts to review the third-party component terms and install.
 2. Open the FactoryFlow desktop shortcut. On first launch, set your factory name and local account.
 3. Try entering an order, a partial delivery and a statement with the [synthetic purchase orders](samples/purchase-orders/README.en.md).
 
-You do not need to install Python, a database or Node.js. The [offline guide](docs/FACTORY-OFFLINE-GUIDE.txt) covers installation, backups and troubleshooting; it and the installer prompts are currently in Chinese. Application source, third-party source materials and `SHA256SUMS.txt` are on the same release page.
+You do not need to install Python, a database or Node.js. The published preview.1 installer and [its offline guide](https://github.com/Doublzzz/FactoryFlow/blob/v0.1.0-preview.1/docs/FACTORY-OFFLINE-GUIDE.txt) use Chinese. Application source, third-party source materials and `SHA256SUMS.txt` are on the same release page.
+
+The preview.2 candidate retains the Chinese entry points and adds `Install.cmd`, English first-use setup, and English start, stop, status, backup and restore commands. Follow the [English offline guide](docs/FACTORY-OFFLINE-GUIDE-en.txt) for that candidate. No online account is needed; you still create a local account on first use. These candidate entry points are not part of the published preview.1 package.
 
 ## How an order moves
 
@@ -82,18 +86,24 @@ You do not need to install Python, a database or Node.js. The [offline guide](do
 
 **5. Export and file.** Export statements in the built-in format or the customer's own Excel template, and keep order originals, delivery copies and statements filed together.
 
+## Finished goods and currencies in preview.2
+
+**Use finished-goods inventory when you need it.** Orders, deliveries and statements work without it. Open a balance for each finished item, record receipts and physical counts, then deduct stock with a delivery or explicitly skip it for later review. A shortage needs confirmation before the book balance may go negative. Voiding a delivery reverses its original stock movements; historical deliveries are not deducted retroactively, and an unopened item is not zero stock. Raw materials, purchasing, production/BOM, batches, multiple warehouses and costing are outside this scope.
+
+**Keep CNY and USD separate.** Each order and statement has one currency; a confirmed order's currency cannot change. For the same customer and period, use separate statements for each currency. Amounts are never combined across currencies or converted. Interface language is independent of currency. This adds no payments, invoicing or foreign tax rules.
+
 ## Current limits
 
 - This is a **Windows developer preview**. See the [verification record](docs/VERIFICATION.md) for installation and workflow checks.
 - Single computer only, with no multi-user access over a local network.
 - During the preview, data is not guaranteed to carry over to the next version. Do not keep your only copy of real business data in the preview, and back up regularly.
-- **CNY only.** Customer acceptance and finalized statements do not mean payment was received, and statements and delivery notes are not tax invoices. No inventory, payments, multiple currencies or foreign tax.
-- The UI supports Simplified Chinese and English, and so do the built-in statement Excel and delivery printing. Customer names, item codes and source text stay as written, customer templates keep their wording, and archived delivery copies currently use the Chinese layout.
+- The preview.2 candidate supports **CNY / USD**, without exchange rates, conversion or payments. Customer acceptance and finalized statements do not mean payment was received. Statements and delivery notes are not tax invoices, and foreign tax compliance is not provided.
+- The UI defaults to Simplified Chinese, with an English switch. Built-in statement Excel, delivery printing and new archives support English; generated files fix their language when created. Customer names, item codes, source text, customer templates and custom layout wording stay as written. Changing language does not alter older exports or archives.
 - Backups and exports contain business information; keep them private. See the [distribution notes](docs/DISTRIBUTION.md) for build inputs and third-party materials.
 
 ## Custom features and new modules
 
-For inventory or other features tailored to your workflow, [get in touch](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml). Tell me who will use it, how you handle the work today, and what you need it to do. We can discuss the scope from there.
+Finished-goods inventory is now part of the preview.2 candidate. For other workflows or features tailored to your factory, [get in touch](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml). Tell me who will use it, how you handle the work today, and what you need it to do. We can discuss the scope from there.
 
 For now, use the GitHub feature request form to start the conversation. Keep public posts to a general description; leave out real customer documents and sensitive business information.
 

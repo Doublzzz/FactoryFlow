@@ -2,6 +2,7 @@
 
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from uuid import uuid4
 
@@ -46,6 +47,10 @@ from factoryflow.modules.fulfillment.public import ArchiveDeliveries, Settlement
 from factoryflow.modules.identity.adapters.http import router as identity_router
 from factoryflow.modules.identity.adapters.repository import IdentityRepository
 from factoryflow.modules.identity.application.service import IdentityService, IdentityWork
+from factoryflow.modules.inventory.adapters.http import router as inventory_router
+from factoryflow.modules.inventory.adapters.repository import InventoryRepository
+from factoryflow.modules.inventory.application.service import InventoryService, InventoryWork
+from factoryflow.modules.inventory.public import InventoryDeliveryEffects
 from factoryflow.modules.materials.adapters.http import router as material_router
 from factoryflow.modules.materials.adapters.import_file import read_import_file
 from factoryflow.modules.materials.adapters.repository import MaterialRepository
@@ -108,6 +113,7 @@ class Services:
     statement_lifecycle: StatementLifecycle
     statement_templates: StatementTemplates
     materials: MaterialService
+    inventory: InventoryService
 
     def close(self):
         self.engine.dispose()
@@ -131,7 +137,7 @@ class Services:
         )
 
 
-def build_services(settings: Settings) -> Services:
+def build_services(settings: Settings, *, delivery_script: Path | None = None) -> Services:
     engine = engine_for(settings.database_url)
     store = LocalEvidenceStore(settings.object_root)
 
@@ -189,7 +195,31 @@ def build_services(settings: Settings) -> Services:
                 CustomerAccess(CustomerRepository(conn)),
                 Journal(conn),
                 StatementDeliveryEffects(StatementRepository(conn), Journal(conn)),
+                InventoryDeliveryEffects(
+                    InventoryRepository(conn),
+                    MaterialCatalog(
+                        MaterialRepository(conn), CustomerAccess(CustomerRepository(conn))
+                    ),
+                ),
             )
+
+    def inventory_for(conn):
+        return InventoryWork(
+            InventoryRepository(conn),
+            MaterialCatalog(MaterialRepository(conn), CustomerAccess(CustomerRepository(conn))),
+            Journal(conn),
+        )
+
+    @contextmanager
+    def inventory_work():
+        with transaction() as conn:
+            yield inventory_for(conn)
+
+    @contextmanager
+    def inventory_read_work():
+        with transaction() as conn:
+            conn.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
+            yield inventory_for(conn)
 
     def statements_for(conn):
         return StatementWork(
@@ -248,7 +278,9 @@ def build_services(settings: Settings) -> Services:
                     DeliveryRepository(conn),
                     DeliveryLayoutRepository(conn),
                     SettlementOrderSources(OrderRepository(conn)),
-                    render_archive_delivery,
+                    partial(render_archive_delivery, script_path=delivery_script)
+                    if delivery_script is not None
+                    else render_archive_delivery,
                 ),
                 "statement_export": ArchiveStatements(ArchiveStatementRepository(conn), store),
             },
@@ -304,6 +336,7 @@ def build_services(settings: Settings) -> Services:
             preview_grid,
         ),
         MaterialService(material_work, read_import_file),
+        InventoryService(inventory_work, inventory_read_work),
     )
 
 
@@ -326,7 +359,14 @@ def create_app(web_directory: Path | None = None, settings: Settings | None = No
         redoc_url="/redoc" if web_directory is None else None,
         lifespan=lifespan,
     )
-    application.state.services = build_services(settings) if settings is not None else None
+    application.state.services = (
+        build_services(
+            settings,
+            delivery_script=web_directory / "delivery-print.js" if web_directory else None,
+        )
+        if settings is not None
+        else None
+    )
     application.add_middleware(
         TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "test"]
     )
@@ -352,6 +392,20 @@ def create_app(web_directory: Path | None = None, settings: Settings | None = No
 
     def safe_error(request, code, status, field=None):
         messages = {
+            "INVENTORY_ALREADY_OPEN": "这个成品已经开始记录库存，请重新读取当前余额。",
+            "INVENTORY_NOT_MANAGED": "这个成品还未开账，请先按当前实物数量开始记录。",
+            "INVENTORY_UNIT_REQUIRED": "请先在物料池核实基本单位，再开始记录库存。",
+            "INVENTORY_UNIT_MISMATCH": (
+                "订单单位与库存单位不同或尚未核实；请核对，或明确选择本次只记送货。"
+            ),
+            "INVENTORY_SHORTAGE": (
+                "账面库存不足。实物已发出时，请明确确认入库尚未登记；也可取消本次同步。"
+            ),
+            "INVENTORY_POSITIVE_QUANTITY_REQUIRED": "入库数量必须大于零。",
+            "INVENTORY_RECEIPT_IN_USE": "作废这笔入库会使库存为负，请先核对实际出入库。",
+            "INVENTORY_RECEIPT_NOT_ACTIVE": "这条记录不是可作废的入库，或已经作废。",
+            "INVENTORY_ENTRY_NOT_FOUND": "未找到这条库存流水，请重新读取。",
+            "QUANTITY_OUT_OF_RANGE": "数量超出当前支持范围，请核对输入。",
             "MATERIAL_IMPORT_INVALID_FILE": (
                 "无法读取这份文件，请另存为 UTF-8 CSV 或单内容工作表的 xlsx 后重试。"
             ),
@@ -493,6 +547,7 @@ def create_app(web_directory: Path | None = None, settings: Settings | None = No
     application.include_router(identity_router, prefix="/api/v1")
     application.include_router(customer_router, prefix="/api/v1")
     application.include_router(material_router, prefix="/api/v1")
+    application.include_router(inventory_router, prefix="/api/v1")
     application.include_router(order_router, prefix="/api/v1")
     application.include_router(delivery_router, prefix="/api/v1")
     application.include_router(delivery_layout_router, prefix="/api/v1")

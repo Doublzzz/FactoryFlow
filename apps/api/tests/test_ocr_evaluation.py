@@ -24,15 +24,22 @@ def row(description="Synthetic-A", quantity="2", unit="PCS"):
 def documents(rows=None, reviewed=True):
     rows = [row()] if rows is None else rows
     truth_case = {
-        "case_id": "C01", "split": "development", "layout": "L01",
-        "source_sha256": "a" * 64, "manual_reviewed": reviewed,
-        "truth_row_count": len(rows), "rows": rows,
+        "case_id": "C01",
+        "split": "development",
+        "layout": "L01",
+        "source_sha256": "a" * 64,
+        "manual_reviewed": reviewed,
+        "truth_row_count": len(rows),
+        "rows": rows,
     }
     candidate = {
-        "case_id": "C01", "source_sha256": "a" * 64, "rows": rows,
+        "case_id": "C01",
+        "source_sha256": "a" * 64,
+        "rows": rows,
     }
     return {"schema_version": 1, "cases": [truth_case]}, {
-        "schema_version": 1, "cases": [candidate],
+        "schema_version": 1,
+        "cases": [candidate],
     }
 
 
@@ -46,9 +53,14 @@ def test_missing_case_keeps_denominator(evaluator):
     assert result["cases"][0]["status"] == "missing_case"
 
 
-@pytest.mark.parametrize("field,value", [
-    ("description", "Synthetic-B"), ("quantity", "20"), ("unit", "KG"),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("description", "Synthetic-B"),
+        ("quantity", "20"),
+        ("unit", "KG"),
+    ],
+)
 def test_wrong_field_with_equal_row_count_fails(evaluator, field, value):
     truth, candidates = documents()
     candidates["cases"][0]["rows"] = [dict(row(), **{field: value})]

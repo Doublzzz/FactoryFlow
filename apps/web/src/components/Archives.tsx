@@ -1,4 +1,4 @@
-import { getLocale, msg, t, type UiMessage } from "../i18n";
+import { getLocale, outputLanguage, msg, t, type UiMessage } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError, message, type ArchiveBatch, type ArchivePreview, type ArchivePreviewRequest, type ArchiveRule, type ArchiveSettings, type ArchiveSource } from "../api";
 import "./archives.css";
@@ -66,6 +66,7 @@ export function Archives({ canWrite, onGuardChange }: { canWrite: boolean; onGua
   const command = useRef<PendingCommand | null>(null);
   const sourceRequest = useRef(0);
   const detailSection = useRef<HTMLElement>(null);
+  const locale = getLocale();
   const selected = Object.values(selections);
   const locked = busy || sourceBusy || !!pending;
   const guard = busy || !!pending;
@@ -99,6 +100,7 @@ export function Archives({ canWrite, onGuardChange }: { canWrite: boolean; onGua
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
 
+  useEffect(() => { if (!pending) { setPreview(null); setPreviewBody(null); } }, [locale]);
   function invalidate() { setPreview(null); setPreviewBody(null); }
   async function loadSources(target: Kind, more = false) {
     const request = ++sourceRequest.current;
@@ -125,7 +127,7 @@ export function Archives({ canWrite, onGuardChange }: { canWrite: boolean; onGua
   }
   async function previewPaths() {
     if (!selected.length || locked) return;
-    const body: ArchivePreviewRequest = { rule, selections: selected.map(({ key, token }) => ({ key, token })) };
+    const body: ArchivePreviewRequest = { rule, locale, selections: selected.map(({ key, token }) => ({ key, token })) };
     setBusy(true); setError(""); invalidate();
     try { const result = await api.previewArchive(body); setPreview(result); setPreviewBody(body); }
     catch (failure) { setError(message(failure)); }
@@ -195,7 +197,7 @@ export function Archives({ canWrite, onGuardChange }: { canWrite: boolean; onGua
     <div className="page-heading"><div><h1>{t("文件整理")}</h1><p>{t("选择订单原件、送货单和对账 Excel，预览分类路径，再生成一批工作文件。")}</p></div></div>
     <nav className="work-section-nav" aria-label={t("文件整理区域")}><a href="#archive-rule">{t("整理规则")}</a><a href="#archive-files">{t("选择文件")}</a><a href="#archive-records">{t("整理记录")}</a></nav>
     <p className="archive-disclosure">{t("工作文件保存生成时的版本与状态。离线副本不会随业务变化更新，也不替代正式结算或正式归档。")}</p>
-    <p className="muted">{t("旧文件保留原语言；整理的送货副本沿用中文归档版式。")}</p>
+    <p className="muted">{t("新送货副本和分类路径使用预览时的语言；原件、旧导出和自定义版式文字保持原文。")}</p>
     {!canWrite && <p className="warning">{t("当前账号可查看、预览和下载，不能保存规则或生成文件。")}</p>}
     {settings && !settings.root_configured && <p role="status" className="warning">{t("本机未配置工作归档目录，暂不能创建批次或生成副本。请由本机管理员配置；仍可预览分类路径和查看记录。")}</p>}
     {error && <p role="alert" className="error">{t(error)}</p>}
@@ -227,7 +229,7 @@ export function Archives({ canWrite, onGuardChange }: { canWrite: boolean; onGua
     {!!selected.length && <div className="archive-selection"><strong>{t("已选文件")}</strong><ul>{selected.map(item => <li key={item.key}><span>{sourceTitle(item)}{!item.current ? t(" · 历史快照") : ""}</span><button className="text-button" disabled={locked} aria-label={t("移除 {0}", [sourceTitle(item)])} onClick={() => toggle(item)}>{t("移除")}</button></li>)}</ul></div>}
     <div className="actions archive-preview-actions"><button disabled={locked || !selected.length} onClick={() => void previewPaths()}>{t("预览分类路径")}</button><span className="muted">{t("最多 50 份、50 MiB；仅统计文件，不汇总业务数量或金额。")}</span></div>
     </section>
-    {preview && <section className="archive-preview work-panel"><div className="archive-rule-heading work-panel-heading"><h2>{t("路径预览 ·{0}", [(ruleName(rule)) ?? ""])}</h2><span>{t("{0} 份 ·{1}", [(preview.items.length) ?? "", (size(preview.total_bytes)) ?? ""])}</span></div><FileTable items={preview.items} />
+    {preview && <section className="archive-preview work-panel"><div className="archive-rule-heading work-panel-heading"><h2>{t("路径预览 ·{0}", [(ruleName(rule)) ?? ""])}</h2><span>{t("{0} 份 ·{1}", [(preview.items.length) ?? "", (size(preview.total_bytes)) ?? ""])}</span></div><p className="muted">{t("输出语言：{0}", [outputLanguage(previewBody?.locale ?? "zh-CN")])}</p><FileTable items={preview.items} />
       {preview.items.some(item => !item.current) && <p className="warning">{t("本批包含历史来源；生成的工作文件会保留历史标识。")}</p>}
       <p className="muted">{t("来源或规则变化后须重新预览；创建时会再次校验来源版本。")}</p>
       {canWrite && <button disabled={locked || !settings?.root_configured || !previewBody} onClick={() => { if (previewBody) void runCommand({ kind: "create", key: crypto.randomUUID(), body: { ...previewBody, preview_token: preview.preview_token } }); }}>{t("确认预览并创建批次")}</button>}

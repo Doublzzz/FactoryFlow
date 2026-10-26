@@ -62,3 +62,16 @@ test("browser preference persists and invalid stored values use Chinese", async 
     else delete globalThis.localStorage;
   }
 });
+
+test("English launcher explicitly selects English without changing the default", async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, "location");
+  Object.defineProperty(globalThis, "location", { configurable: true, value: { search: "?lang=en" } });
+  try {
+    assert.equal((await load()).getLocale(), "en");
+    globalThis.location.search = "?lang=unknown";
+    assert.equal((await load()).getLocale(), "zh-CN");
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, "location", descriptor);
+    else delete globalThis.location;
+  }
+});

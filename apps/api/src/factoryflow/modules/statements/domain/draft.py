@@ -66,6 +66,9 @@ def source_key(line):
 
 
 def prepare_draft(payload):
+    currency = payload.get("currency", "CNY")
+    if currency not in ("CNY", "USD"):
+        raise BusinessError("CURRENCY_REQUIRED", field="currency")
     start, end = period(payload.get("period_start"), payload.get("period_end"))
     try:
         customer = str(UUID(str(payload.get("customer_id"))))
@@ -119,6 +122,8 @@ def prepare_draft(payload):
             item.update(delivery_id=key[0], order_line_id=key[1])
         adjustments.append(item)
     return {
+        # Omitted/explicit CNY retains the pre-currency command fingerprint.
+        **({"currency": currency} if currency != "CNY" else {}),
         "customer_id": customer,
         "period_start": start,
         "period_end": end,

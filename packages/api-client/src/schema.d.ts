@@ -486,6 +486,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inventory List */
+        get: operations["listInventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/entries/{entry_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void Receipt */
+        post: operations["voidInventoryReceipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["previewInventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/{material_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detail */
+        get: operations["getInventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/{material_id}/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count */
+        post: operations["countInventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/{material_id}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opening */
+        post: operations["openInventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/{material_id}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Receipt */
+        post: operations["receiveInventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/material-codes": {
         parameters: {
             query?: never;
@@ -1362,6 +1481,12 @@ export interface components {
             local_available: boolean | null;
             /** Local Error */
             local_error: string | null;
+            /**
+             * Locale
+             * @default zh-CN
+             * @enum {string}
+             */
+            locale: "zh-CN" | "en";
             /** Relative Directory */
             relative_directory: string;
             /**
@@ -1386,6 +1511,12 @@ export interface components {
         };
         /** ArchiveCreateRequest */
         ArchiveCreateRequest: {
+            /**
+             * Locale
+             * @default zh-CN
+             * @enum {string}
+             */
+            locale: "zh-CN" | "en";
             /** Preview Token */
             preview_token: string;
             /**
@@ -1447,6 +1578,12 @@ export interface components {
         };
         /** ArchivePreviewRequest */
         ArchivePreviewRequest: {
+            /**
+             * Locale
+             * @default zh-CN
+             * @enum {string}
+             */
+            locale: "zh-CN" | "en";
             /**
              * Rule
              * @enum {string}
@@ -1787,6 +1924,11 @@ export interface components {
         /** DeliveryInput */
         DeliveryInput: {
             /**
+             * Confirm Inventory Shortage
+             * @default false
+             */
+            confirm_inventory_shortage: boolean;
+            /**
              * Customer Id
              * Format: uuid
              */
@@ -1795,6 +1937,12 @@ export interface components {
             delivery_date: string;
             /** Expected Version */
             expected_version: number;
+            /**
+             * Inventory Mode
+             * @default sync
+             * @enum {string}
+             */
+            inventory_mode: "sync" | "skip";
             /** Lines */
             lines: components["schemas"]["DeliveryLineInput"][];
             /**
@@ -1807,6 +1955,31 @@ export interface components {
              * Format: uuid
              */
             revision_id: string;
+        };
+        /** DeliveryInventorySnapshot */
+        DeliveryInventorySnapshot: {
+            /** Canonical Unit */
+            canonical_unit: string | null;
+            /** Material Id */
+            material_id: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "sync" | "skip";
+            /** Movement Id */
+            movement_id: string | null;
+            /** Quantity */
+            quantity: string;
+            /** Reason */
+            reason: string | null;
+            /** Shortage Confirmed */
+            shortage_confirmed: boolean;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "tracked" | "skipped" | "unmanaged" | "unlinked";
         };
         /** DeliveryLayoutColumn */
         DeliveryLayoutColumn: {
@@ -1878,6 +2051,7 @@ export interface components {
             canonical_unit: string | null;
             /** Description */
             description: string;
+            inventory?: components["schemas"]["DeliveryInventorySnapshot"] | null;
             /** Line Number */
             line_number: number;
             /**
@@ -1968,6 +2142,12 @@ export interface components {
         DraftInput: {
             /** Adjustments */
             adjustments?: components["schemas"]["AdjustmentInput"][];
+            /**
+             * Currency
+             * @default CNY
+             * @enum {string}
+             */
+            currency: "CNY" | "USD";
             /**
              * Customer Id
              * Format: uuid
@@ -2176,6 +2356,158 @@ export interface components {
             occurred_on: string;
             /** Person */
             person: string;
+        };
+        /** InventoryAccount */
+        InventoryAccount: {
+            /** Balance */
+            balance: string;
+            /** Canonical Unit */
+            canonical_unit: string;
+            /** Has Skipped */
+            has_skipped: boolean;
+            /**
+             * Material Id
+             * Format: uuid
+             */
+            material_id: string;
+            /** Needs Review */
+            needs_review: boolean;
+            /** Negative Balance */
+            negative_balance: boolean;
+            /** Version */
+            version: number;
+        };
+        /** InventoryCountInput */
+        InventoryCountInput: {
+            /** Business Date */
+            business_date: string;
+            /** Expected Version */
+            expected_version: number;
+            /** Quantity */
+            quantity: string;
+            /** Reason */
+            reason: string;
+        };
+        /** InventoryDetail */
+        InventoryDetail: {
+            account: components["schemas"]["InventoryAccount"] | null;
+            /** Entries */
+            entries: components["schemas"]["InventoryEntry"][];
+            material: components["schemas"]["InventoryMaterial"];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** InventoryEntry */
+        InventoryEntry: {
+            /** Account Version */
+            account_version: number;
+            /** Balance After */
+            balance_after: string;
+            /** Business Date */
+            business_date: string;
+            /** Delivery Id */
+            delivery_id: string | null;
+            /** Delta */
+            delta: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "opening" | "receipt" | "count" | "delivery" | "skip" | "delivery_void" | "receipt_void";
+            /**
+             * Material Id
+             * Format: uuid
+             */
+            material_id: string;
+            /** Order Line Id */
+            order_line_id: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Recorded At */
+            recorded_at: string;
+            /** Reversed By */
+            reversed_by: string | null;
+            /** Reverses Id */
+            reverses_id: string | null;
+            /** Shortage Confirmed */
+            shortage_confirmed: boolean;
+            /** Target Quantity */
+            target_quantity: string | null;
+        };
+        /** InventoryItem */
+        InventoryItem: {
+            account: components["schemas"]["InventoryAccount"] | null;
+            material: components["schemas"]["InventoryMaterial"];
+        };
+        /** InventoryMaterial */
+        InventoryMaterial: {
+            /** Active */
+            active: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Own Code */
+            own_code: string;
+            /** Specification */
+            specification: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Version */
+            version: number;
+        };
+        /** InventoryMutation */
+        InventoryMutation: {
+            account: components["schemas"]["InventoryAccount"];
+            entry: components["schemas"]["InventoryEntry"];
+        };
+        /** InventoryPage */
+        InventoryPage: {
+            /** Items */
+            items: components["schemas"]["InventoryItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** InventoryPosition */
+        InventoryPosition: {
+            account: components["schemas"]["InventoryAccount"] | null;
+            /**
+             * Material Id
+             * Format: uuid
+             */
+            material_id: string;
+        };
+        /** InventoryPreview */
+        InventoryPreview: {
+            /** Items */
+            items: components["schemas"]["InventoryPosition"][];
+        };
+        /** InventoryPreviewInput */
+        InventoryPreviewInput: {
+            /** Material Ids */
+            material_ids: string[];
+        };
+        /** InventoryQuantityInput */
+        InventoryQuantityInput: {
+            /** Business Date */
+            business_date: string;
+            /** Quantity */
+            quantity: string;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** InventoryVoidInput */
+        InventoryVoidInput: {
+            /** Reason */
+            reason: string;
         };
         /** LifecycleHistory */
         LifecycleHistory: {
@@ -2685,9 +3017,9 @@ export interface components {
             business_date: string;
             /**
              * Currency
-             * @constant
+             * @enum {string}
              */
-            currency: "CNY";
+            currency: "CNY" | "USD";
             /**
              * Customer Id
              * Format: uuid
@@ -3095,6 +3427,12 @@ export interface components {
             /** Adjustments */
             adjustments?: components["schemas"]["AdjustmentInput"][];
             /**
+             * Currency
+             * @default CNY
+             * @enum {string}
+             */
+            currency: "CNY" | "USD";
+            /**
              * Customer Id
              * Format: uuid
              */
@@ -3459,9 +3797,9 @@ export interface components {
             cross_period: boolean;
             /**
              * Currency
-             * @constant
+             * @enum {string}
              */
-            currency: "CNY";
+            currency: "CNY" | "USD";
             /**
              * Customer Id
              * Format: uuid
@@ -3567,6 +3905,12 @@ export interface components {
             /** Confirmation Evidence Ids */
             confirmation_evidence_ids?: string[];
             correction?: components["schemas"]["StatementCorrection"] | null;
+            /**
+             * Currency
+             * @default CNY
+             * @enum {string}
+             */
+            currency: "CNY" | "USD";
             /**
              * Customer Id
              * Format: uuid
@@ -3922,9 +4266,9 @@ export interface components {
             canonical_unit: string | null;
             /**
              * Currency
-             * @constant
+             * @enum {string}
              */
-            currency: "CNY";
+            currency: "CNY" | "USD";
             /**
              * Customer Id
              * Format: uuid
@@ -6829,6 +7173,578 @@ export interface operations {
             };
         };
     };
+    listInventory: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryPage"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    voidInventoryReceipt: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InventoryVoidInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryMutation"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    previewInventory: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InventoryPreviewInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryPreview"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getInventory: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                material_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    countInventory: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                material_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InventoryCountInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryMutation"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    openInventory: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                material_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InventoryQuantityInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryMutation"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    receiveInventory: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                material_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InventoryQuantityInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryMutation"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     listMaterialCodes: {
         parameters: {
             query?: {
@@ -8867,6 +9783,7 @@ export interface operations {
                 statement_id?: string | null;
                 cursor?: string | null;
                 limit?: number;
+                currency?: "CNY" | "USD";
             };
             header?: {
                 "X-CSRF-Token"?: string | null;

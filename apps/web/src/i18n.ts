@@ -5,6 +5,8 @@ export type UiMessage = string | { key: string; values: readonly UiValue[] };
 type UiValue = UiMessage | number | null | undefined;
 const storageKey = "factoryflow.locale";
 function savedLocale(): Locale {
+  const requested = new URLSearchParams(globalThis.location?.search ?? "").get("lang");
+  if (requested === "en" || requested === "zh-CN") return requested;
   try { return globalThis.localStorage?.getItem(storageKey) === "en" ? "en" : "zh-CN"; }
   catch { return "zh-CN"; }
 }
@@ -20,6 +22,11 @@ export function setLocale(value: Locale): void {
   if (value === locale) return;
   locale = value;
   try { globalThis.localStorage?.setItem(storageKey, value); } catch { /* The current tab still works without storage. */ }
+  if (globalThis.location?.search.includes("lang=")) {
+    const url = new URL(globalThis.location.href);
+    url.searchParams.set("lang", value);
+    try { globalThis.history?.replaceState(null, "", url); } catch { /* Keep in-memory choice. */ }
+  }
   for (const listener of listeners) listener();
 }
 

@@ -1,0 +1,55 @@
+FactoryFlow for Windows — Installation and daily use
+
+Requirements: Windows 10 or 11, x64, with Chrome or current Microsoft Edge.
+The target computer does not need an internet connection, Python, Node.js, or a separate database installation.
+This package runs on one computer. It does not provide access from other computers on the network.
+
+First use
+1. Copy the entire ZIP to the computer and choose Extract All. Do not run files from inside the ZIP.
+2. Open Install.cmd. Read the bundled Microsoft component terms and enter Y if you accept them. Verification and copying may take a few minutes. The installer creates a FactoryFlow desktop entry.
+3. Open FactoryFlow on the desktop. Enter your factory name, username, and password. The password must have at least 12 characters; password input is hidden.
+4. Sign in with that account. Create a customer while entering an order, or use the Customers page. Material lists can be imported separately.
+5. Choose CNY or USD explicitly for each order and review the quantities and prices before confirming. The default remains CNY, regardless of interface language. A confirmed order's currency cannot be changed.
+6. Record a partial or full delivery, print a delivery note, and prepare a statement for the matching currency. CNY and USD use separate statements even for the same customer and period.
+
+Language and money
+The English launcher opens the English interface. The language switch changes interface wording, built-in statement exports, and newly generated delivery copies. It does not translate customer names, uploaded documents, saved delivery-layout text, or customer Excel templates.
+Amounts retain their order currency. There is no currency conversion, exchange-rate calculation, payment processing, invoice generation, or country-specific tax compliance.
+Check the currency wording in your own Excel template before exporting. Existing exports and archives keep the language and content fixed when they were generated.
+
+Available workflow
+Customers; manual orders and file extraction; human review and confirmation; partial deliveries and printing; optional finished-goods inventory; statement drafts; customer Excel templates; external delivery/return reference numbers; sent records, feedback, approval, pending settlement, review, formal statements, exports, and local archives.
+Image recognition uses bundled local models and does not upload images. Always review extracted text, currency, quantities, and prices. An external return reference is supporting evidence; entering it does not record a stock return.
+The package contains no customer templates or developer business data.
+
+Optional finished-goods inventory
+Start an item's stock record from a physical count. An unopened item has no recorded balance; it is not zero stock. Previous deliveries are not deducted retroactively.
+Record later receipts and counts. For each delivery, choose to deduct stock or explicitly skip stock handling for later review. A shortage requires confirmation before the book balance may go negative. Voiding a delivery reverses the original stock movements.
+Orders and statements remain usable without inventory. Raw materials, purchasing, production/BOM, multiple warehouses and costing are outside this preview.
+
+Daily use
+Open the desktop entry. Saved records remain available after restarting. Save your work before closing the browser; unsaved edits are not a backup.
+Open %LOCALAPPDATA%\FactoryFlow to find Back Up Data.cmd, Stop FactoryFlow.cmd, and Check Status.cmd.
+Check Status.cmd shows the local address and data directory. If the browser does not open automatically, copy the address into Chrome or Edge and select English if needed.
+
+Back up and move to another computer
+Run Back Up Data.cmd. Copy the entire reported backup folder to a separate drive. Keep database.dump, manifest.json, and the objects folder together.
+On the new computer, install this package. You do not need to create a new account first. Run Restore Backup.cmd in %LOCALAPPDATA%\FactoryFlow and enter the full backup-folder path.
+Restore creates a new data environment, verifies it, and switches to it only after success. The previous environment is retained. Sign in with the original account and password; previous login sessions are invalidated.
+Data is stored under %LOCALAPPDATA%\FactoryFlow\data. Keep this directory. Removing program files is not a backup.
+Backups and archives contain business information: protect them like the original order documents. Archive copies can be regenerated from restored frozen records; backups retain the original evidence objects.
+
+Troubleshooting
+If MSVCP or VCRUNTIME is missing and this package includes Install Runtime.cmd, run it and complete the Microsoft runtime installation. If that optional installer is absent, download the x64 Microsoft runtime from the official link below on a connected computer, then copy it over and install it. Windows may ask for administrator confirmation. Retry FactoryFlow afterwards.
+If a port is occupied, run Stop FactoryFlow.cmd and retry. Do not terminate unrelated software or database processes.
+If startup fails, keep the error message and the relevant server.log and postgres.log files under data\environments for support. Do not delete business data to retry.
+Windows 7/8, 32-bit Windows, ARM devices, and macOS are not supported by this Windows x64 package.
+
+Before relying on it
+Consult the verification report supplied with the package. Synthetic checks do not establish acceptance on your factory computer. Try a small sample order, partial delivery, statement export, backup, and restore before entering business records.
+
+Runtime and license information
+The program's third-party directory contains component licenses and provenance. The reviewed public Windows package uses PostgreSQL built from official source with MSVC; it does not use the EDB binary distribution.
+Python: https://docs.python.org/3.14/using/windows.html
+PostgreSQL: https://www.postgresql.org/docs/18/installation-platform-notes.html
+Microsoft runtime: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist

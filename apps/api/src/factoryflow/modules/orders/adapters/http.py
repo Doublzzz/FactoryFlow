@@ -41,7 +41,7 @@ class OrderInput(StrictDTO):
     customer_id: UUID
     order_number: str = Field(min_length=1, max_length=100)
     business_date: str = Field(min_length=10, max_length=10)
-    currency: Literal["CNY"]
+    currency: Literal["CNY", "USD"]
     lines: list[OrderLineInput] = Field(min_length=1, max_length=200)
     material_choices: list[OrderMaterialChoice] = Field(default_factory=list, max_length=200)
 

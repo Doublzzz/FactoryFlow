@@ -12,17 +12,44 @@ _KINDS = {"source": "订单原件", "delivery": "送货单", "statement_export":
 _DEVICES = re.compile(r"^(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\.|$)", re.I)
 
 
-def _human(value: str, limit: int) -> str:
+def _human(value: str, limit: int, fallback="未命名") -> str:
     value = re.sub(r'[<>:"/\\|?*\x00-\x1f\x7f]', "_", value).strip().rstrip(". ")
-    value = value[:limit].rstrip(". ") or "未命名"
+    value = value[:limit].rstrip(". ") or fallback
     if _DEVICES.match(value) or value in {".", ".."}:
         value = "_" + value
     return value
 
 
-def relative_path(rule: str, item: dict) -> str:
+def english_labels(item: dict) -> dict:
+    """Translate server-owned labels, retaining customer/file/order titles."""
+    title, version, state = item["title"], item["version_label"], item["state_label"]
+    if item["kind"] == "statement_export":
+        title = "Final statement materials" if item["extension"] == "zip" else "Statement Excel"
+    version = re.sub(r"^送货 v(\d+) · 模板 v(\d+)$", r"Delivery v\1 Layout v\2", version)
+    version = re.sub(r"^(正式对账|对账) v(\d+)$", r"Statement v\2", version)
+    version = re.sub(r"^确认版本 ", "Revision ", version)
+    state = {
+        "已确认": "Confirmed",
+        "有效": "Active",
+        "已作废": "Void",
+        "已删除": "Deleted",
+        "待归类": "Unclassified",
+        "未确认": "Unconfirmed",
+        "未生成": "Not generated",
+        "生成中": "Pending",
+        "生成失败": "Failed",
+        "已生成": "Generated",
+    }.get(state, state)
+    return {"title": title, "version_label": version, "state_label": state}
+
+
+def relative_path(rule: str, item: dict, *, locale="zh-CN") -> str:
     if rule not in RULES:
         raise BusinessError("ARCHIVE_RULE_INVALID")
+    if locale not in ("zh-CN", "en"):
+        raise BusinessError("UNSUPPORTED_LOCALE")
+    english = locale == "en"
+    fallback = "Unnamed" if english else "未命名"
     try:
         kind = item["kind"]
         category = _KINDS[kind]
@@ -36,6 +63,13 @@ def relative_path(rule: str, item: dict) -> str:
             raise ValueError
         if kind == "statement_export" and extension == "zip":
             category = "正式对账资料"
+        if english:
+            category = {
+                "订单原件": "Order originals",
+                "送货单": "Delivery notes",
+                "对账草稿": "Statements",
+                "正式对账资料": "Final statement materials",
+            }[category]
         token = item["token"]
         if not re.fullmatch(r"[0-9a-f]{64}", token):
             raise ValueError
@@ -47,20 +81,25 @@ def relative_path(rule: str, item: dict) -> str:
             raise ValueError
         customer_id = str(UUID(item["customer_id"])) if item.get("customer_id") else None
         customer = item.get("customer_name")
-        segments = ["工作文件"]
+        segments = ["Work files" if english else "工作文件"]
         if day is None or (rule != "date" and (customer_id is None or not customer)):
-            segments.append("待归类")
+            segments.append("Unclassified" if english else "待归类")
         else:
             if rule == "date":
                 segments.extend([f"{day.year:04d}", f"{day.month:02d}", f"{day.day:02d}"])
             elif rule == "month_customer":
                 segments.extend([f"{day.year:04d}", f"{day.month:02d}"])
             if rule != "date":
-                segments.append(f"{_human(customer, 20)}_{customer_id[:8]}")
-        title = _human(item["title"], 30)
-        version = _human(item["version_label"], 20)
-        state = _human(item["state_label"], 12)
-        period = f"_{day.isoformat()}至{end.isoformat()}" if day and end else ""
+                segments.append(f"{_human(customer, 20, fallback)}_{customer_id[:8]}")
+        title, version, state = item["title"], item["version_label"], item["state_label"]
+        if english:
+            labels = english_labels(item)
+            title, version, state = labels["title"], labels["version_label"], labels["state_label"]
+        title = _human(title, 30, fallback)
+        version = _human(version, 20, fallback)
+        state = _human(state, 12, fallback)
+        separator = "_to_" if english else "至"
+        period = f"_{day.isoformat()}{separator}{end.isoformat()}" if day and end else ""
         name = f"{title}_{version}_{state}{period}_{source_id}_{token[:12]}.{extension}"
         return "/".join([*segments, category, name])
     except KeyError, ValueError, TypeError, AttributeError:

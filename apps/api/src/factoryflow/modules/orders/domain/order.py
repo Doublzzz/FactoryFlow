@@ -61,7 +61,7 @@ def prepare_order(payload: dict) -> ConfirmedOrder:
         business_date = date.fromisoformat(payload.get("business_date", ""))
     except ValueError, TypeError:
         raise BusinessError("INVALID_INPUT") from None
-    if payload.get("currency") != "CNY":
+    if payload.get("currency") not in ("CNY", "USD"):
         raise BusinessError("CURRENCY_REQUIRED", field="currency")
     lines = payload.get("lines")
     if not isinstance(lines, list) or not 1 <= len(lines) <= 200:
@@ -99,6 +99,6 @@ def prepare_order(payload: dict) -> ConfirmedOrder:
         customer,
         required_text(payload.get("order_number"), "order_number", 100),
         business_date,
-        "CNY",
+        payload["currency"],
         tuple(confirmed),
     )

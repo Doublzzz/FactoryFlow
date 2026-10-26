@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid7
 
 from factoryflow.kernel.contracts import BusinessError
-from factoryflow.modules.archives.domain.paths import RULES, relative_path
+from factoryflow.modules.archives.domain.paths import RULES, english_labels, relative_path
 
 
 def encoded(value):
@@ -80,19 +80,27 @@ class Archives:
                 raise BusinessError("ARCHIVE_SOURCE_INVALID")
             return work.providers[kind].catalog(actor, cursor, limit)
 
-    def capture(self, work, actor, rule, selections):
+    def capture(self, work, actor, rule, selections, locale="zh-CN"):
         self.rule(rule)
+        if locale not in ("zh-CN", "en"):
+            raise BusinessError("UNSUPPORTED_LOCALE")
         if not 1 <= len(selections) <= 50 or len({i["key"] for i in selections}) != len(selections):
             raise BusinessError("ARCHIVE_SELECTION_INVALID")
         items, files = [], {}
         total = 0
         for selection in sorted(selections, key=lambda i: i["key"]):
-            item, content = self.provider(work, selection["key"]).capture(actor, selection["key"])
+            provider = self.provider(work, selection["key"])
+            options = (
+                {"locale": locale}
+                if selection["key"].startswith("delivery:") and locale != "zh-CN"
+                else {}
+            )
+            item, content = provider.capture(actor, selection["key"], **options)
             if not item["available"]:
                 raise BusinessError("ARCHIVE_SOURCE_UNAVAILABLE", 409)
             if item["token"] != selection["token"]:
                 raise BusinessError("ARCHIVE_PREVIEW_STALE", 409)
-            path = relative_path(rule, item)
+            path = relative_path(rule, item, locale=locale)
             total += len(content)
             if total > 50 * 1024 * 1024:
                 raise BusinessError("ARCHIVE_LIMIT_EXCEEDED", 413)
@@ -100,21 +108,31 @@ class Archives:
                 raise BusinessError("ARCHIVE_PATH_INVALID")
             files[path] = content
             items.append(
-                {**item, "path": path, "sha256": digest(content), "byte_size": len(content)}
+                {
+                    **item,
+                    **(english_labels(item) if locale == "en" else {}),
+                    "path": path,
+                    "sha256": digest(content),
+                    "byte_size": len(content),
+                }
             )
         token = digest(encoded({"rule": rule, "items": items}))
         return {"items": items, "total_bytes": total, "preview_token": token}, files
 
-    def preview(self, actor, rule, selections):
+    def preview(self, actor, rule, selections, locale="zh-CN"):
         with self.snapshot() as work:
-            result, _ = self.capture(work, actor, rule, selections)
+            result, _ = self.capture(work, actor, rule, selections, locale)
             return result
 
-    def create(self, actor, key, rule, selections, preview_token):
+    def create(self, actor, key, rule, selections, preview_token, locale="zh-CN"):
         actor.require_write()
         if self.copies.root is None:
             raise BusinessError("ARCHIVE_NOT_CONFIGURED", 503)
         payload = {"rule": rule, "selections": selections, "preview_token": preview_token}
+        if locale not in ("zh-CN", "en"):
+            raise BusinessError("UNSUPPORTED_LOCALE")
+        if locale != "zh-CN":
+            payload["locale"] = locale
         # Snapshot conflicts repeat the entire command with the same idempotency key.
         for attempt in range(3):
             try:
@@ -130,7 +148,10 @@ class Archives:
             prior = work.journal.claim(actor, "archive.create", key, payload)
             if prior is not None:
                 return prior["id"]
-            preview, files = self.capture(work, actor, payload["rule"], payload["selections"])
+            locale = payload.get("locale", "zh-CN")
+            preview, files = self.capture(
+                work, actor, payload["rule"], payload["selections"], locale
+            )
             if preview["preview_token"] != payload["preview_token"]:
                 raise BusinessError("ARCHIVE_PREVIEW_STALE", 409)
             fingerprint = preview["preview_token"]
@@ -146,6 +167,12 @@ class Archives:
                     "items": preview["items"],
                     "total_bytes": preview["total_bytes"],
                 }
+                if locale == "en":
+                    manifest.update(
+                        locale=locale,
+                        notice="Work files · Snapshot at generation; "
+                        "not live status or final settlement.",
+                    )
                 envelope = {
                     "type": "archive-input-v1",
                     "files": {
@@ -197,6 +224,7 @@ class Archives:
             k: record[k] for k in ("id", "rule", "status", "file_hash", "error_code", "created_at")
         }
         result.update(
+            locale=record["manifest"].get("locale", "zh-CN"),
             current=current,
             items=record["manifest"]["items"],
             total_bytes=record["manifest"]["total_bytes"],

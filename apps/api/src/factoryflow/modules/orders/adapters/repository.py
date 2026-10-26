@@ -20,14 +20,23 @@ class OrderRepository:
         if not identifiers:
             return []
         rows = self.conn.execute(
-            text("SELECT l.*,o.customer_id,o.currency FROM order_lines l JOIN orders o "
-                 "ON o.organization_id=l.organization_id AND o.id=l.order_id "
-                 "WHERE l.organization_id=:org AND l.id=ANY(:ids)"),
+            text(
+                "SELECT l.*,o.customer_id,o.currency FROM order_lines l JOIN orders o "
+                "ON o.organization_id=l.organization_id AND o.id=l.order_id "
+                "WHERE l.organization_id=:org AND l.id=ANY(:ids)"
+            ),
             {"org": actor.organization_id, "ids": [UUID(str(value)) for value in identifiers]},
         ).mappings()
-        return [{**self.line_view(row), "order_id": str(row["order_id"]),
-                 "revision_id": str(row["revision_id"]), "customer_id": str(row["customer_id"]),
-                 "currency": row["currency"]} for row in rows]
+        return [
+            {
+                **self.line_view(row),
+                "order_id": str(row["order_id"]),
+                "revision_id": str(row["revision_id"]),
+                "customer_id": str(row["customer_id"]),
+                "currency": row["currency"],
+            }
+            for row in rows
+        ]
 
     def __init__(self, conn):
         self.conn = conn

@@ -1,6 +1,6 @@
 # Privacy and snapshot scope / 隐私与快照范围
 
-This is a source snapshot without Git history, prepared for a fresh public history. It does not inherit the development repository's old commits or internal context records.
+The public history starts from a reviewed source snapshot. Later candidates are assembled on that public baseline; they do not inherit the development repository's old commits or internal context records. Downloadable application-source ZIPs contain no Git metadata.
 
 Included: application source, migrations, generated API contracts, locked dependency manifests, synthetic tests, generic operating documentation, licensed UI font resources, and explicitly synthetic demo assets.
 

@@ -89,6 +89,22 @@ def test_invalid_rule():
         relative_path("unsafe", item())
 
 
+def test_english_paths_and_manifest_keep_customer_text_and_safe_names():
+    value = item(
+        title="Synthetic order.pdf",
+        customer_name="Original 用户名",
+        version_label="确认版本 v1",
+        state_label="已确认",
+    )
+    path = relative_path("month_customer", value, locale="en")
+    assert path.startswith("Work files/2026/01/Original 用户名_")
+    assert "/Order originals/" in path and "Confirmed" in path
+    with ZipFile(io.BytesIO(build_zip({path: b"synthetic"}, {"locale": "en"}))) as reader:
+        assert "manifest.json" in reader.namelist()
+        assert "清单.json" not in reader.namelist()
+        assert reader.read(path) == b"synthetic"
+
+
 def test_zip_deterministic_and_same_manifest():
     files = {"工作文件/订单/b.png": b"two", "工作文件/订单/a.png": b"one"}
     manifest = {"说明": "工作文件", "version": 1}

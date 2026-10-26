@@ -75,14 +75,15 @@ def propose(rows: list[str], *, pages: list[dict] | None = None) -> dict:
         "lines": [],
         "warnings": [],
     }
-    numbers, dates = set(), set()
+    numbers, dates, currencies = set(), set(), set()
     for raw in rows:
         row_numbers, row_dates, metadata = _header_values(raw)
         numbers.update(row_numbers)
         dates.update(row_dates)
         line = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])", "", raw).strip()
-        if re.fullmatch(r"(?:币种|Currency)\s*[:：]\s*CNY", line, re.I):
-            candidate["currency"] = "CNY"
+        currency = re.fullmatch(r"(?:币种|Currency)\s*[:：]\s*(CNY|USD)", line, re.I)
+        if currency:
+            currencies.add(currency[1].upper())
         match = re.fullmatch(
             r"(.+?)\s+([+\-−＋－]?\s*[0-9]+(?:\s*[.,·．，。]\s*[0-9]+)?)"
             r"\s+([A-Za-z.\u4e00-\u9fff]{1,40})",
@@ -108,6 +109,7 @@ def propose(rows: list[str], *, pages: list[dict] | None = None) -> dict:
             )
     candidate["order_number"] = next(iter(numbers)) if len(numbers) == 1 else ""
     candidate["business_date"] = next(iter(dates)) if len(dates) == 1 else ""
+    candidate["currency"] = next(iter(currencies)) if len(currencies) == 1 else ""
     if pages is not None:
         candidate["lines"] = []
         for number, page in enumerate(pages, start=1):

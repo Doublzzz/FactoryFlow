@@ -95,6 +95,72 @@ def prepare(service, actor, kinds=("source",), rule="month_customer"):
     }, preview
 
 
+def test_english_archive_freezes_language_and_legacy_default_replays(pg, enabled):
+    service, api = enabled
+    source(pg)
+    selected = selections(service.catalog(pg.actor, "delivery")["items"])
+    body = {"rule": "month_customer", "selections": selected, "locale": "en"}
+    preview = ok(api.request("POST", "/api/v1/archives/preview", json=body))
+    body["preview_token"] = preview["preview_token"]
+    key = uuid4()
+    batch = ok(api.command("/api/v1/archives", body, key))
+    assert batch["locale"] == "en"
+    assert batch["items"][0]["path"].startswith("Work files/")
+    assert ok(api.command("/api/v1/archives", body, key))["id"] == batch["id"]
+    changed = api.command("/api/v1/archives", body | {"locale": "zh-CN"}, key)
+    assert changed.json()["code"] == "IDEMPOTENCY_CONFLICT"
+    # A different language also needs a new matching preview, even under a new key.
+    stale = api.command("/api/v1/archives", body | {"locale": "zh-CN"})
+    assert stale.json()["code"] == "ARCHIVE_PREVIEW_STALE"
+    ready = ok(api.request("POST", f"/api/v1/archives/{batch['id']}/generate"))
+    assert ready["status"] == "ready"
+    original = service.download(pg.actor, batch["id"])
+    with ZipFile(BytesIO(original)) as archive:
+        html = archive.read(batch["items"][0]["path"]).decode()
+        assert "Delivery note" in html and "State at generation: Active" in html
+        assert "manifest.json" in archive.namelist()
+        manifest = json.loads(archive.read("manifest.json"))
+        assert manifest["locale"] == "en"
+        assert manifest["items"][0]["state_label"] == "Active"
+        assert manifest["items"][0]["version_label"].startswith("Delivery v")
+    legacy_body, _ = prepare(service, pg.actor, kinds=("delivery",))
+    old_key = uuid4()
+    legacy = ok(api.command("/api/v1/archives", legacy_body, old_key))
+    assert legacy["locale"] == "zh-CN"
+    assert (
+        ok(api.command("/api/v1/archives", legacy_body | {"locale": "zh-CN"}, old_key))["id"]
+        == legacy["id"]
+    )
+    assert service.download(pg.actor, batch["id"]) == original
+
+
+def test_installed_app_wires_archive_script_from_its_web_directory(pg, tmp_path, monkeypatch):
+    from factoryflow.modules.fulfillment.adapters import archive_renderer
+
+    source(pg)
+    web = tmp_path / "bundled-web"
+    web.mkdir()
+    (web / "index.html").write_text("Synthetic app", encoding="utf-8")
+    (web / "delivery-print.js").write_text("/* synthetic bundled paginator */", encoding="utf-8")
+    monkeypatch.setattr(
+        archive_renderer, "__file__", str(tmp_path / "missing/development/source.py")
+    )
+    app = create_app(
+        settings=replace(pg.settings, archive_root=tmp_path / "copies"), web_directory=web
+    )
+    try:
+        service = app.state.services.archives
+        selected = selections(service.catalog(pg.actor, "delivery")["items"])
+        preview = service.preview(pg.actor, "date", selected, "en")
+        batch = service.create(pg.actor, uuid4(), "date", selected, preview["preview_token"], "en")
+        assert service.generate(pg.actor, batch["id"])["status"] == "ready"
+        with ZipFile(BytesIO(service.download(pg.actor, batch["id"]))) as archive:
+            html = archive.read(batch["items"][0]["path"]).decode()
+            assert "synthetic bundled paginator" in html and "Delivery note" in html
+    finally:
+        app.state.services.close()
+
+
 def test_generation_zip_exactbytes_dedup_rules_and_immutable_history(pg, enabled):
     service, api = enabled
     _, content = uploaded(pg)

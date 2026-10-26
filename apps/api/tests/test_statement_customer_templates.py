@@ -82,8 +82,10 @@ def custom_snapshot(count=1):
     return data
 
 
-def test_customer_template_language_does_not_translate_cells_or_annotations():
+@pytest.mark.parametrize("currency", ["CNY", "USD"])
+def test_customer_template_language_does_not_translate_cells_or_annotations(currency):
     data = custom_snapshot(2)
+    data["statement"]["currency"] = currency
     source = template_file()
     chinese = load_workbook(BytesIO(render_excel(data | {"locale": "zh-CN"}, source)))
     english = load_workbook(BytesIO(render_excel(data | {"locale": "en"}, source)))
@@ -91,6 +93,7 @@ def test_customer_template_language_does_not_translate_cells_or_annotations():
     assert list(english.active.values) == list(chinese.active.values)
     assert english.active["A1"].value == "合成模板"
     assert "金额未确定" in english.active["E2"].value
+    assert currency in english.active["E2"].value
     assert english.active.oddFooter.left.text == chinese.active.oddFooter.left.text
     assert str(english.active.print_area) == str(chinese.active.print_area)
 

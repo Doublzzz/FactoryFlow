@@ -106,6 +106,16 @@ def test_piped_first_setup_does_not_wait_for_native_console(factory, monkeypatch
     assert factory.password_input("password:") == "Synthetic-piped-secret"
 
 
+def test_english_first_setup_rejects_short_password_before_creating_data(factory, monkeypatch):
+    factory.LANGUAGE = "en"
+    monkeypatch.setattr(
+        factory, "new_cluster", lambda *_: pytest.fail("invalid setup created data")
+    )
+    with pytest.raises(factory.LocalError, match="Password"):
+        factory.prepare("Synthetic Factory", "synthetic", "short")
+    assert not factory.BASE.exists()
+
+
 def test_installer_preserves_business_directory_and_rejects_tampering(tmp_path, monkeypatch):
     import hashlib
     import json

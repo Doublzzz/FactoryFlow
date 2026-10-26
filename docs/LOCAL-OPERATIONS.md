@@ -52,7 +52,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Account setup failed' }
 .\.venv\Scripts\python.exe scripts/serve-local.py --config .runtime/development/app.json
 ```
 
-Setup prompts for a new local password without echoing it. Do not paste credentials into issues or commit generated configuration. A prepare command refuses to replace an existing environment. Current schema head is `0013_material_pool`; startup does not migrate.
+Setup prompts for a new local password without echoing it. Do not paste credentials into issues or commit generated configuration. A prepare command refuses to replace an existing environment. Current schema head is `0015_order_currencies`; startup does not migrate.
 
 Open `http://127.0.0.1:8100/` and sign in with `synthetic-admin` and the password you just chose. The helper binds PostgreSQL and the API to loopback. `/api/v1/health/live` checks the process; `/api/v1/health/ready` checks configured schema/object readiness.
 
@@ -91,4 +91,4 @@ $env:FACTORYFLOW_TEST_ADMIN_CONFIG = Join-Path (Get-Location) '.runtime\developm
 
 Omitted configuration causes skips, not successful business validation. Never use real business credentials or a customer database to run tests. Native OCR tests additionally depend on the Windows host and its language resources.
 
-The fresh-clone check used Windows 11 x64, Node 24.19.0, uv 0.13.5, managed Python 3.14.9 and PostgreSQL 18.6. It used newly downloaded dependencies and a new database on an existing Windows machine. It does not establish a clean-machine installer, Windows 10, macOS, Linux or factory-use acceptance.
+The preview.1 fresh-clone check used Windows 11 x64, Node 24.19.0, uv 0.13.5, managed Python 3.14.9 and PostgreSQL 18.6. It used newly downloaded dependencies and a new database on an existing Windows machine. See [verification](VERIFICATION.md) for preview.2 results and the separate GitHub Actions status. These checks do not establish a clean-machine installer, Windows 10, macOS or factory-use acceptance.

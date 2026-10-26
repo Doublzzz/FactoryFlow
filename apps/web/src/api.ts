@@ -19,6 +19,10 @@ export type StatementAdjustment = Schemas["AdjustmentInput"];
 export type Session = Schemas["SessionResponse"];
 export type Customer = Schemas["CustomerResponse"];
 export type Material = Schemas["MaterialResponse"];
+export type InventoryDetail = Schemas["InventoryDetail"];
+export type InventoryAccount = Schemas["InventoryAccount"];
+export type InventoryEntry = Schemas["InventoryEntry"];
+export type InventoryItem = Schemas["InventoryItem"];
 export type MaterialInput = Schemas["MaterialInput"];
 export type MaterialCode = Schemas["MaterialCodeResponse"];
 export type MaterialChoice = Schemas["OrderMaterialChoice"];
@@ -59,6 +63,16 @@ function value<T>(result: { data?: T; error?: unknown; response: Response }): T 
 }
 
 const serviceErrors: Record<string, string> = {
+  "INVENTORY_ALREADY_OPEN": "这个成品已经开始记录库存，请重新读取当前余额。",
+  "INVENTORY_NOT_MANAGED": "这个成品还未开账，请先按当前实物数量开始记录。",
+  "INVENTORY_UNIT_REQUIRED": "请先在物料池核实基本单位，再开始记录库存。",
+  "INVENTORY_UNIT_MISMATCH": "订单单位与库存单位不同或尚未核实；请核对，或明确选择本次只记送货。",
+  "INVENTORY_SHORTAGE": "账面库存不足。实物已发出时，请明确确认入库尚未登记；也可取消本次同步。",
+  "INVENTORY_POSITIVE_QUANTITY_REQUIRED": "入库数量必须大于零。",
+  "INVENTORY_RECEIPT_IN_USE": "作废这笔入库会使库存为负，请先核对实际出入库。",
+  "INVENTORY_RECEIPT_NOT_ACTIVE": "这条记录不是可作废的入库，或已经作废。",
+  "INVENTORY_ENTRY_NOT_FOUND": "未找到这条库存流水，请重新读取。",
+  "QUANTITY_OUT_OF_RANGE": "数量超出当前支持范围，请核对输入。",
   "MATERIAL_IMPORT_INVALID_FILE": "无法读取这份文件，请另存为 UTF-8 CSV 或单内容工作表的 xlsx 后重试。",
   "MATERIAL_IMPORT_UNSUPPORTED": "这份文件含不支持的格式，请移除公式、宏、外链、合并、隐藏内容或复杂对象，另存为明细表后重试。",
   "MATERIAL_IMPORT_LIMIT": "导入上限为 2 MiB、2,000 条数据、30 列；请缩小或分批，xlsx 解压后不超过 20 MiB。",
@@ -108,7 +122,11 @@ const serviceErrors: Record<string, string> = {
   "STATEMENT_TEMPLATE_COVERAGE": "此模板缺少本单税费或调整位置，请补齐后导入，或使用内置模板。",
   "STATEMENT_TEMPLATE_OUTPUT_LIMIT": "此模板一次最多输出 1000 条明细，请使用内置模板。",
   "STATEMENT_TEMPLATE_TEXT_LIMIT": "文字超出此模板单行可完整打印的范围。请加宽或合并该字段的横向空间，或使用能完整呈现该内容的排版。",
-  "STATEMENT_PERIOD_EXISTS": "该客户和期间已有对账单，请打开原草稿或重开已放弃草稿。",
+  "STATEMENT_PERIOD_EXISTS": "该客户、期间和币种已有对账单，请打开原草稿或重开已放弃草稿。",
+  "CURRENCY_REQUIRED": "请选择 CNY 人民币或 USD 美元。",
+  "ORDER_CURRENCY_IMMUTABLE": "已确认订单的币种不能修改，请新建正确币种的订单。",
+  "STATEMENT_CURRENCY_IMMUTABLE": "对账单币种不能修改，请新建相应币种的对账单。",
+  "STATEMENT_CURRENCY_MISMATCH": "这条明细的币种与对账单不同，请在相应币种的对账单处理。",
   "STATEMENT_QUANTITY_EXCEEDED": "结算数量超过可用送货数量，请刷新后核对。",
   "STATEMENT_SOURCE_INVALID": "送货来源已变化或不属于这个客户，请重新核对。",
   "STATEMENT_REASON_REQUIRED": "请填写调整、暂缓或部分结算的原因。",
@@ -164,6 +182,13 @@ export function message(error: unknown): UiMessage {
 }
 
 export const api = {
+  inventoryList: (cursor?: string) => client.GET("/api/v1/inventory", { ...options(), params: { query: { ...(cursor ? { cursor } : {}), limit: 50 } } }).then(value),
+  inventory: (material_id: string, cursor?: string) => client.GET("/api/v1/inventory/{material_id}", { ...options(), params: { path: { material_id }, query: { ...(cursor ? { cursor } : {}), limit: 50 } } }).then(value),
+  inventoryPreview: (material_ids: string[]) => client.POST("/api/v1/inventory/preview", { ...options(), body: { material_ids } }).then(value),
+  openInventory: (material_id: string, body: Schemas["InventoryQuantityInput"], key: string) => client.POST("/api/v1/inventory/{material_id}/open", { ...options(), params: { path: { material_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  receiveInventory: (material_id: string, body: Schemas["InventoryQuantityInput"], key: string) => client.POST("/api/v1/inventory/{material_id}/receipts", { ...options(), params: { path: { material_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  countInventory: (material_id: string, body: Schemas["InventoryCountInput"], key: string) => client.POST("/api/v1/inventory/{material_id}/counts", { ...options(), params: { path: { material_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  voidInventoryReceipt: (entry_id: string, reason: string, key: string) => client.POST("/api/v1/inventory/entries/{entry_id}/void", { ...options(), params: { path: { entry_id }, header: { "Idempotency-Key": key } }, body: { reason } }).then(value),
   inspectMaterialImport: (body: MaterialImportFile) => client.POST("/api/v1/materials/imports/inspect", { ...options(), signal: AbortSignal.timeout(45000), body }).then(value),
   previewMaterialImport: (body: MaterialImportInput) => client.POST("/api/v1/materials/imports/preview", { ...options(), signal: AbortSignal.timeout(45000), body }).then(value),
   confirmMaterialImport: (body: Schemas["MaterialImportConfirm"], key: string) => client.POST("/api/v1/materials/imports/confirm", { ...commandOptions(key), signal: AbortSignal.timeout(45000), body }).then(value),
@@ -216,7 +241,7 @@ export const api = {
   },
   statement: (statement_id: string) => client.GET("/api/v1/statements/{statement_id}", { ...options(), params: { path: { statement_id } } }).then(value),
   statements: (customer_id: string, cursor?: string) => client.GET("/api/v1/statements", { ...options(), params: { query: { customer_id, ...(cursor ? { cursor } : {}) } } }).then(value),
-  statementCandidates: (customer_id: string, period_start: string, period_end: string, statement_id?: string, cursor?: string) => client.GET("/api/v1/statement-candidates", { ...options(), params: { query: { customer_id, period_start, period_end, ...(statement_id ? { statement_id } : {}), ...(cursor ? { cursor } : {}) } } }).then(value),
+  statementCandidates: (customer_id: string, period_start: string, period_end: string, statement_id?: string, cursor?: string, currency: "CNY" | "USD" = "CNY") => client.GET("/api/v1/statement-candidates", { ...options(), params: { query: { customer_id, period_start, period_end, currency, ...(statement_id ? { statement_id } : {}), ...(cursor ? { cursor } : {}) } } }).then(value),
   createStatement: (body: StatementDraft, key: string) => client.POST("/api/v1/statements", { ...commandOptions(key), body }).then(value),
   saveStatement: (statement_id: string, body: Schemas["SaveDraftInput"], key: string, reopen = false) => reopen
     ? client.POST("/api/v1/statements/{statement_id}/reopen", { ...options(), params: { path: { statement_id }, header: { "Idempotency-Key": key } }, body }).then(value)

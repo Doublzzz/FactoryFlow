@@ -57,9 +57,10 @@ class StatementService:
                 src["customer_id"] != body["customer_id"]
                 or origin["customer_id"] != body["customer_id"]
                 or src["delivery_date"] > body["period_end"]
-                or origin["currency"] != "CNY"
             ):
                 raise BusinessError("STATEMENT_SOURCE_INVALID", 409)
+            if origin["currency"] != body.get("currency", "CNY"):
+                raise BusinessError("STATEMENT_CURRENCY_MISMATCH", 409)
             quantity = Decimal(line["quantity"])
             if (
                 src["quantity_policy"]["mode"] == "INTEGER_ONLY"
@@ -151,6 +152,8 @@ class StatementService:
             self.require_version(current, expected)
             if current["status"] not in ({"abandoned", "void"} if reopen else {"draft"}):
                 raise BusinessError("STATEMENT_STATE_CONFLICT", 409)
+            if current.get("currency", "CNY") != body.get("currency", "CNY"):
+                raise BusinessError("STATEMENT_CURRENCY_IMMUTABLE", 409)
             if any(
                 current[field] != body[field]
                 for field in ("customer_id", "period_start", "period_end")
@@ -220,14 +223,28 @@ class StatementService:
             work.customers.require(actor, customer_id)
             return work.statements.list(actor, customer_id, cursor, limit)
 
-    def candidates(self, actor, customer_id, start, end, cursor=None, limit=50, statement_id=None):
+    def candidates(
+        self,
+        actor,
+        customer_id,
+        start,
+        end,
+        cursor=None,
+        limit=50,
+        statement_id=None,
+        currency="CNY",
+    ):
         start, end = period(start, end)
+        if currency not in ("CNY", "USD"):
+            raise BusinessError("CURRENCY_REQUIRED", field="currency")
         with self.read_transaction() as work:
             work.customers.require(actor, customer_id)
             if statement_id:
                 existing = work.statements.get(actor, statement_id, history=False)
                 if existing["customer_id"] != str(customer_id):
                     raise BusinessError("STATEMENT_SOURCE_INVALID", 409)
+                if existing.get("currency", "CNY") != currency:
+                    raise BusinessError("STATEMENT_CURRENCY_MISMATCH", 409)
             page = work.deliveries.candidates(actor, customer_id, end, cursor, limit)
             refs = {(s["order_id"], s["revision_id"], s["order_line_id"]) for s in page["items"]}
             orders = work.orders.read(actor, refs)
@@ -254,7 +271,8 @@ class StatementService:
                 )
                 item["cross_period"] = item["delivery_date"] < start
                 item.pop("organization_id", None)
+            page["items"] = [item for item in page["items"] if item["currency"] == currency]
             page["overlapping_statements"] = work.statements.overlaps(
-                actor, customer_id, start, end
+                actor, customer_id, start, end, currency
             )
             return page

@@ -68,7 +68,18 @@ def cli_bundle(tmp_path, monkeypatch):
         "Synthetic preceding license\n" + TERMS + "\n----------\nSynthetic next license\n",
         encoding="utf-8",
     )
-    for name in ("启动工厂软件", "停止工厂软件", "备份工厂数据", "恢复工厂备份", "查看运行状态"):
+    for name in (
+        "启动工厂软件",
+        "停止工厂软件",
+        "备份工厂数据",
+        "恢复工厂备份",
+        "查看运行状态",
+        "Start FactoryFlow",
+        "Stop FactoryFlow",
+        "Back Up Data",
+        "Restore Backup",
+        "Check Status",
+    ):
         (source / (name + ".cmd")).write_text("@echo synthetic\n", encoding="utf-8")
     files = {
         path.relative_to(source).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
@@ -162,3 +173,20 @@ def test_incomplete_terms_fail_even_with_acceptance_flag(cli_bundle, monkeypatch
     with pytest.raises(ValueError, match="Microsoft 组件条件"):
         cli_bundle.installer.main()
     assert not cli_bundle.destination.exists()
+
+
+@pytest.mark.parametrize("answer,installed", [("Y", True), ("N", False)])
+def test_english_install_preserves_terms_and_requires_explicit_consent(
+    cli_bundle, monkeypatch, capsys, answer, installed
+):
+    monkeypatch.setattr(sys, "argv", [*sys.argv, "--language", "en"])
+    monkeypatch.setattr("builtins.input", lambda prompt: answer)
+    assert cli_bundle.installer.main() == (0 if installed else 1)
+    output = capsys.readouterr().out
+    assert TERMS in output
+    assert "Microsoft" in output and "MIT" in output
+    assert not any("\u4e00" <= char <= "\u9fff" for char in output)
+    assert cli_bundle.destination.exists() is installed
+    if installed:
+        assert (cli_bundle.destination / "Start FactoryFlow.cmd").is_file()
+        assert (cli_bundle.destination / "启动工厂软件.cmd").is_file()

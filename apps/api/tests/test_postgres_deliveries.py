@@ -407,6 +407,22 @@ def test_database_last_quantity_guard_without_application_order_lock(pg):
                 OrderRepository(conn).apply_delivery(
                     pg.actor, order["id"], request.quantities, False
                 )
+                deliveries.inventory_snapshots(
+                    pg.actor,
+                    identifier,
+                    {
+                        line["id"]: {
+                            "state": "unlinked",
+                            "material_id": None,
+                            "canonical_unit": line["canonical_unit"],
+                            "quantity": "1.125",
+                            "movement_id": None,
+                            "reason": None,
+                            "mode": "sync",
+                            "shortage_confirmed": False,
+                        },
+                    },
+                )
                 deliveries.action(pg.actor, identifier, "create", None, None)
             return "created"
         except DBAPIError as error:

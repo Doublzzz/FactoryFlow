@@ -90,6 +90,7 @@ class StatementRepository:
         ).mappings()
         result = {
             "id": str(row["id"]),
+            "currency": row.get("currency", "CNY"),
             "customer_id": str(row["customer_id"]),
             "customer_name": row["customer_name"],
             "status": row["status"],
@@ -128,7 +129,7 @@ class StatementRepository:
             result["adjustments"],
         )
         if fixed is not None:
-            result = fixed
+            result = {**fixed, "currency": fixed.get("currency", "CNY")}
         result["history"] = []
         if history:
             result["history"] = [
@@ -144,12 +145,15 @@ class StatementRepository:
         return result
 
     def create(self, actor, identifier, body, customer):
+        currency_column = ",currency" if body.get("currency", "CNY") != "CNY" else ""
+        currency_value = ",:currency" if currency_column else ""
         self.conn.execute(
             text(
                 "INSERT INTO statements(organization_id,id,customer_id,customer_name,"
-                "period_start,period_end,status,version,tax_mode,tax_rate,adjustments) "
+                "period_start,period_end,status,version,tax_mode,tax_rate,"
+                f"adjustments{currency_column}) "
                 "VALUES(:org,:id,:customer,:name,:start,:end,'draft',1,:mode,:rate,"
-                "CAST(:adjustments AS jsonb))"
+                f"CAST(:adjustments AS jsonb){currency_value})"
             ),
             self.parameters(actor, identifier, body) | {"name": customer["full_name"]},
         )
@@ -160,6 +164,7 @@ class StatementRepository:
             "org": actor.organization_id,
             "id": identifier,
             "customer": body["customer_id"],
+            "currency": body.get("currency", "CNY"),
             "start": body["period_start"],
             "end": body["period_end"],
             "mode": body["tax_mode"],
@@ -342,15 +347,22 @@ class StatementRepository:
             "next_cursor": str(rows[-1]) if more else None,
         }
 
-    def overlaps(self, actor, customer_id, start, end):
+    def overlaps(self, actor, customer_id, start, end, currency="CNY"):
         return [
             str(identifier)
             for identifier in self.conn.execute(
                 text(
                     "SELECT id FROM statements WHERE organization_id=:org "
                     "AND customer_id=:customer AND status='draft' "
+                    "AND currency=:currency "
                     "AND period_start<=:end AND period_end>=:start ORDER BY id LIMIT 100"
                 ),
-                {"org": actor.organization_id, "customer": customer_id, "start": start, "end": end},
+                {
+                    "org": actor.organization_id,
+                    "customer": customer_id,
+                    "start": start,
+                    "end": end,
+                    "currency": currency,
+                },
             ).scalars()
         ]

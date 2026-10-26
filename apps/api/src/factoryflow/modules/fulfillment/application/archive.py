@@ -82,10 +82,11 @@ class ArchiveDeliveries:
         ).hexdigest()
         return metadata
 
-    def capture(self, actor, key) -> tuple[dict, bytes]:
+    def capture(self, actor, key, *, locale="zh-CN") -> tuple[dict, bytes]:
         delivery, saved = self.snapshot(actor, key)
         metadata = self.metadata(delivery, saved)
-        content = self.renderer(delivery, saved["config"], saved["version"])
+        options = {"locale": locale} if locale != "zh-CN" else {}
+        content = self.renderer(delivery, saved["config"], saved["version"], **options)
         return {**metadata, "byte_size": len(content)}, content
 
     def describe(self, actor, key) -> dict:

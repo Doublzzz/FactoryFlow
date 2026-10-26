@@ -28,6 +28,8 @@ SUPPORTED_BACKUP_REVISIONS = {
     "0010_statement_lifecycle",
     "0011_customer_templates",
     "0012_external_document_number",
+    "0013_material_pool",
+    "0014_finished_goods_inventory",
     REVISION,
 }
 

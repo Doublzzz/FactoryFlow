@@ -26,6 +26,8 @@ class DeliveryInput(StrictDTO):
     expected_version: int = Field(ge=1, strict=True)
     delivery_date: str = Field(min_length=10, max_length=10)
     lines: list[DeliveryLineInput] = Field(min_length=1, max_length=200)
+    inventory_mode: Literal["sync", "skip"] = "sync"
+    confirm_inventory_shortage: bool = Field(default=False, strict=True)
 
 
 class VoidDeliveryInput(StrictDTO):
@@ -40,6 +42,17 @@ class DeliveryPolicy(StrictDTO):
     version: str
 
 
+class DeliveryInventorySnapshot(StrictDTO):
+    state: Literal["tracked", "skipped", "unmanaged", "unlinked"]
+    material_id: UUID | None
+    canonical_unit: str | None
+    quantity: str
+    movement_id: UUID | None
+    reason: str | None
+    mode: Literal["sync", "skip"]
+    shortage_confirmed: bool
+
+
 class DeliveryLine(StrictDTO):
     order_line_id: UUID
     line_number: int
@@ -48,6 +61,7 @@ class DeliveryLine(StrictDTO):
     source_unit: str | None
     canonical_unit: str | None
     quantity_policy: DeliveryPolicy
+    inventory: DeliveryInventorySnapshot | None = None
 
 
 class DeliverySummary(StrictDTO):
@@ -74,7 +88,12 @@ class DeliveryPage(StrictDTO):
     next_cursor: str | None
 
 
-@router.post("/deliveries", operation_id="createDelivery", response_model=DeliveryDetail)
+@router.post(
+    "/deliveries",
+    operation_id="createDelivery",
+    response_model=DeliveryDetail,
+    response_model_exclude_unset=True,
+)
 def create(body: DeliveryInput, request: Request, actor: CurrentActor, idempotency_key: CommandKey):
     return services(request).deliveries.create(actor, idempotency_key, body.model_dump(mode="json"))
 
@@ -97,7 +116,10 @@ def detail(delivery_id: UUID, request: Request, actor: CurrentActor):
 
 
 @router.post(
-    "/deliveries/{delivery_id}/void", operation_id="voidDelivery", response_model=DeliveryDetail
+    "/deliveries/{delivery_id}/void",
+    operation_id="voidDelivery",
+    response_model=DeliveryDetail,
+    response_model_exclude_unset=True,
 )
 def void(
     delivery_id: UUID,

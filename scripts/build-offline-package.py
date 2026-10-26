@@ -181,6 +181,7 @@ def build(
         ROOT / "scripts/factory-local.py",
         ROOT / "scripts/install-offline.py",
         ROOT / "docs/FACTORY-OFFLINE-GUIDE.txt",
+        ROOT / "docs/FACTORY-OFFLINE-GUIDE-en.txt",
         Path(sys.base_prefix) / "python.exe",
         ocr_base / "python.exe",
         notices_directory / "README.md",
@@ -239,6 +240,7 @@ def build(
     shutil.copy2(ROOT / "scripts/factory-local.py", app / "scripts/factory-local.py")
     shutil.copy2(ROOT / "scripts/install-offline.py", output / "install.py")
     shutil.copy2(ROOT / "docs/FACTORY-OFFLINE-GUIDE.txt", output / "使用说明.txt")
+    shutil.copy2(ROOT / "docs/FACTORY-OFFLINE-GUIDE-en.txt", output / "Read me.txt")
     if vc_redist:
         (output / "运行库").mkdir()
         shutil.copy2(vc_redist, output / "运行库/VC_redist.x64.exe")
@@ -248,22 +250,46 @@ def build(
         "备份工厂数据": "backup",
         "恢复工厂备份": "restore",
         "查看运行状态": "status",
+        "Start FactoryFlow": "start",
+        "Stop FactoryFlow": "stop",
+        "Back Up Data": "backup",
+        "Restore Backup": "restore",
+        "Check Status": "status",
     }
     for name, action in commands.items():
+        language = "en" if name.isascii() else "zh-CN"
         content = (
             "@echo off\r\nchcp 65001 >nul\r\nsetlocal\r\n"
             '"%~dp0runtime\\python\\python.exe" -I -X utf8 '
-            '"%~dp0scripts\\factory-local.py" ' + action + "\r\npause\r\n"
+            '"%~dp0scripts\\factory-local.py" '
+            + action
+            + " --language "
+            + language
+            + "\r\npause\r\n"
         )
         (app / (name + ".cmd")).write_text(content, encoding="utf-8", newline="")
     setup = (
         "@echo off\r\nchcp 65001 >nul\r\nsetlocal\r\n"
         "echo 正在校验并安装 FactoryFlow 离线版，请稍候...\r\n"
         '"%~dp0app\\runtime\\python\\python.exe" -I -X utf8 "%~dp0install.py"\r\n'
-        "if errorlevel 1 echo 如提示缺少 MSVCP 或 VCRUNTIME，请先安装随包“运行库”后重试。\r\n"
+        "if errorlevel 1 echo 如提示缺少 MSVCP 或 VCRUNTIME，请按使用说明中的运行库步骤处理。\r\n"
         "pause\r\n"
     )
     (output / "安装.cmd").write_text(setup, encoding="utf-8", newline="")
+    english_setup = (
+        "@echo off\r\nchcp 65001 >nul\r\nsetlocal\r\n"
+        "echo Verifying and installing FactoryFlow. Please wait...\r\n"
+        '"%~dp0app\\runtime\\python\\python.exe" -I -X utf8 "%~dp0install.py" --language en\r\n'
+        "if errorlevel 1 echo Missing MSVCP or VCRUNTIME? See the runtime steps in Read me.txt.\r\n"
+        "pause\r\n"
+    )
+    (output / "Install.cmd").write_text(english_setup, encoding="utf-8", newline="")
+    if vc_redist:
+        (output / "Install Runtime.cmd").write_text(
+            '@echo off\r\nchcp 65001 >nul\r\n"%~dp0运行库\\VC_redist.x64.exe"\r\npause\r\n',
+            encoding="utf-8",
+            newline="",
+        )
     files = {
         str(p.relative_to(app)).replace("\\", "/"): digest(p)
         for p in sorted(app.rglob("*"))

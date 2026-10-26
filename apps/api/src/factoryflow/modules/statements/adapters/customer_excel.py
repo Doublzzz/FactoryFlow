@@ -668,7 +668,7 @@ def render_customer_excel(snapshot, content):
         "untaxed_final": "未税不另加税",
         "add_tax": f"未税加税 {data['tax_rate']}%",
     }[data["tax_mode"]]
-    label += f" · {tax_label} · CNY"
+    label += f" · {tax_label} · {data.get('currency', 'CNY')}"
     if snapshot.get("current") is False:
         label = "历史版本 · " + label
     if snapshot.get("preview"):

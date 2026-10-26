@@ -3,10 +3,17 @@ from sqlalchemy import text
 
 class CustomerRepository:
     def lock(self, organization_id, customer_id):
-        row = self.conn.execute(
-            text("SELECT id,full_name FROM customers WHERE organization_id=:org "
-                 "AND id=:id FOR UPDATE"), {"org": organization_id, "id": customer_id}
-        ).mappings().first()
+        row = (
+            self.conn.execute(
+                text(
+                    "SELECT id,full_name FROM customers WHERE organization_id=:org "
+                    "AND id=:id FOR UPDATE"
+                ),
+                {"org": organization_id, "id": customer_id},
+            )
+            .mappings()
+            .first()
+        )
         return self.view(row) if row else None
 
     def __init__(self, conn):

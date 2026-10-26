@@ -45,7 +45,7 @@ def test_new_catalog_links_codes_and_sequence_restore(pg, tmp_path):
     original = pg.objects.joinpath(result["sha256"] + ".json").read_bytes()
     backup = tmp_path / "m1-backup"
     manifest = pg.runtime.backup(backup, BINARY)
-    assert manifest["schema_revision"] == REVISION == "0013_material_pool"
+    assert manifest["schema_revision"] == REVISION
     assert validate_backup(backup) == manifest
     with owned_database(pg, "ff_material_restore_") as (name, admin):
         restored_objects = tmp_path / "restored-objects"

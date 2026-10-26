@@ -156,9 +156,14 @@ def evaluate(truth, candidates):
         if actual[case_id]["source_sha256"].lower() != expected[case_id]["source_sha256"].lower():
             _fail("SOURCE_HASH_MISMATCH", case_id)
     summary = {
-        "total_cases": len(expected), "passed_documents": 0, "row_count_equal": 0,
-        "known_truth_rows": 0, "unknown_truth_row_cases": 0, "unreviewed_cases": 0,
-        "missing_cases": 0, **{f"{field}_correct": 0 for field in _FIELDS},
+        "total_cases": len(expected),
+        "passed_documents": 0,
+        "row_count_equal": 0,
+        "known_truth_rows": 0,
+        "unknown_truth_row_cases": 0,
+        "unreviewed_cases": 0,
+        "missing_cases": 0,
+        **{f"{field}_correct": 0 for field in _FIELDS},
     }
     results = []
     for case_id, case in expected.items():
@@ -196,12 +201,19 @@ def evaluate(truth, candidates):
         summary["passed_documents"] += passed
         for key, value in scores.items():
             summary[key] += value
-        results.append({
-            "case_id": case_id, "split": case["split"], "layout": case["layout"],
-            "status": status, "reviewed": reviewed, "truth_rows": count,
-            "candidate_rows": len(proposed["rows"]) if proposed is not None else None,
-            "row_count_equal": equal, **scores,
-        })
+        results.append(
+            {
+                "case_id": case_id,
+                "split": case["split"],
+                "layout": case["layout"],
+                "status": status,
+                "reviewed": reviewed,
+                "truth_rows": count,
+                "candidate_rows": len(proposed["rows"]) if proposed is not None else None,
+                "row_count_equal": equal,
+                **scores,
+            }
+        )
     summary["total_truth_rows"] = (
         None if summary["unknown_truth_row_cases"] else summary["known_truth_rows"]
     )
@@ -236,7 +248,7 @@ def main(argv=None):
         args = parser.parse_args(argv)
         paths = [args.truth.resolve(), args.candidates.resolve(), args.output.resolve()]
         for index, left in enumerate(paths):
-            for right in paths[index + 1:]:
+            for right in paths[index + 1 :]:
                 if left == right or (left.exists() and right.exists() and left.samefile(right)):
                     _fail("PATH_CONFLICT")
         result = evaluate(_read(paths[0]), _read(paths[1]))
@@ -244,7 +256,10 @@ def main(argv=None):
         temporary = None
         try:
             with tempfile.NamedTemporaryFile(
-                mode="w", encoding="utf-8", dir=paths[2].parent, delete=False,
+                mode="w",
+                encoding="utf-8",
+                dir=paths[2].parent,
+                delete=False,
             ) as stream:
                 temporary = Path(stream.name)
                 json.dump(result, stream, ensure_ascii=True, indent=2)

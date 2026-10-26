@@ -12,7 +12,7 @@ Normal deliveries consume outstanding order quantities. Partial delivery is supp
 
 A draft gathers delivery quantities, prices and explicit adjustments. Sending evidence, customer feedback, accepted quantities, pending review, current-period selection and finalization are distinct facts. Finalization fixes the selected accepted quantities and amounts; it is not a payment event. Eligible accepted or pending-review balances may be carried to a later period through explicit commands. Earlier finalized evidence remains unchanged.
 
-All quantities and amounts use exact decimals. Current currency is CNY. The existing tax modes are tax-included, no-additional-tax and explicitly added tax. These modes do not establish foreign tax compliance.
+All quantities and amounts use exact decimals. Each order and statement uses CNY or USD, selected explicitly and independently of interface language. CNY is the default. A confirmed order's currency cannot change; the same customer and period use separate statements for different currencies. Amounts in different currencies are never added or converted. The existing tax modes are tax-included, no-additional-tax and explicitly added tax. These modes do not establish foreign tax compliance.
 
 ## Item catalog
 
@@ -24,6 +24,12 @@ The supported uploaded order sources are image/PDF files. Local extraction produ
 
 Working-file organization creates fixed copies. It is not a replacement for full database/object backups or formal reconciliation. Generated historical files remain in their original language and state.
 
+## Optional finished-goods inventory
+
+Inventory is optional. Open each finished item's balance from a physical count, then record receipts or later counts with immutable movements. An unopened item has no recorded balance; it is not zero stock. Historical deliveries are not deducted retroactively.
+
+A delivery either deducts linked finished-goods stock or explicitly skips stock handling for later review. A shortage requires explicit confirmation before a book balance can go negative. Delivery, stock movements, audit and idempotency results commit together. Voiding a delivery reverses its original movements. An external return reference on a statement does not itself create a stock return.
+
 ## Deliberately absent
 
-Inventory, a general plugin platform, overseas accounting/tax, multi-currency, invoices, payment processing, production deployment and public release are not implemented or authorized by this snapshot. The synthetic order examples are documents for demonstrations, not ready-made customer data for a real business database.
+Raw materials, purchasing, production/BOM, batches, multiple warehouses, costing, exchange rates, invoices, payment processing, overseas accounting/tax and a general plugin platform are outside this preview. Preparing this source does not establish production acceptance or authorize publication. The synthetic order examples are documents for demonstrations, not ready-made customer data for a real business database.
