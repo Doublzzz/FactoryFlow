@@ -13,9 +13,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.1"><img alt="Windows 预览版" src="https://img.shields.io/github/v/release/Doublzzz/FactoryFlow?include_prereleases&label=Windows%20%E9%A2%84%E8%A7%88%E7%89%88&color=5b6ee1"></a>
+  <a href="https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.2"><img alt="Windows 预览版" src="https://img.shields.io/github/v/release/Doublzzz/FactoryFlow?include_prereleases&label=Windows%20%E9%A2%84%E8%A7%88%E7%89%88&color=5b6ee1"></a>
   <img alt="数据只在本机" src="https://img.shields.io/badge/%E6%95%B0%E6%8D%AE-%E5%8F%AA%E5%9C%A8%E6%9C%AC%E6%9C%BA-2f8f5b">
   <img alt="界面 中文和 English" src="https://img.shields.io/badge/%E7%95%8C%E9%9D%A2-%E4%B8%AD%E6%96%87%20%7C%20English-555">
+  <a href="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml"><img alt="CI" src="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml/badge.svg?branch=main"></a>
   <a href="LICENSE"><img alt="MIT 许可" src="https://img.shields.io/github/license/Doublzzz/FactoryFlow?color=555"></a>
 </p>
 
@@ -31,7 +32,7 @@
 
 主要面向小型生产工厂的老板，以及负责跟单、安排送货和月末对账的办公室人员：每天要记清客户订了什么、已经交了多少、还欠多少，以及哪些已经获得客户认可、安排在本期结算。
 
-如果贸易公司只需要管理客户订单、分批交货和对账，也可以试用这套流程。preview.2 候选增加可选成品库存；供应商采购、原材料、生产/BOM 和成本毛利管理，目前还不覆盖。
+如果贸易公司只需要管理客户订单、分批交货和对账，也可以试用这套流程。preview.2增加可选成品库存；供应商采购、原材料、生产/BOM 和成本毛利管理，目前还不覆盖。
 
 ## 为什么做成这样
 
@@ -54,17 +55,15 @@
 
 ## 下载试用
 
-**当前源码正在准备 v0.1.0-preview.2，尚未发布。** 候选加入 CNY/USD、英文 Windows 安装流程及可选成品库存；版本与检查进度见[当前状态](docs/STATUS.md)。
+Windows 10/11 x64 开发者预览：[v0.1.0-preview.2](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.2)。下载 `FactoryFlow-Windows-x64-v0.1.0-preview.2.zip`（约 174 MB），包含 CNY/USD、英文安装流程和可选成品库存。
 
-已发布的 Windows 10/11 x64 包仍为 [v0.1.0-preview.1](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.1)：下载 `FactoryFlow-Windows-x64-v0.1.0-preview.1.zip`（约 174 MB）。该包只支持 CNY，不含成品库存。
-
-1. 完整解压 ZIP，双击 `安装.cmd`，按提示阅读第三方组件条件并完成安装。
+1. 完整解压 ZIP，双击 `安装.cmd`；英文用户运行 `Install.cmd`。按提示阅读第三方组件条件并完成安装。
 2. 打开桌面的 FactoryFlow 入口，首次启动时设置工厂名称和本地账号。
 3. 用仓库里的[合成采购单](samples/purchase-orders/README.md)试一遍录单、分批送货和对账。
 
-不用另装 Python、数据库或 Node.js。该已发布版本的安装、备份和故障处理见 [preview.1 离线使用说明](https://github.com/Doublzzz/FactoryFlow/blob/v0.1.0-preview.1/docs/FACTORY-OFFLINE-GUIDE.txt)；同版源码、第三方源码材料和 `SHA256SUMS.txt` 都在版本页面。
+无需在线账号，也不用另装 Python、数据库或 Node.js。安装、备份和故障处理见[中文使用说明](docs/FACTORY-OFFLINE-GUIDE.txt)或[English guide](docs/FACTORY-OFFLINE-GUIDE-en.txt)。同版应用源码、第三方源码材料和 `SHA256SUMS.txt` 在版本页面。
 
-preview.2 候选保留中文入口，并提供 `Install.cmd`、英文首次账号设置及启动、停止、状态、备份、恢复入口，详见[英文离线说明](docs/FACTORY-OFFLINE-GUIDE-en.txt)。无需在线账号，首次使用仍需创建本地账号。以上说明面向候选，不代表已发布的 preview.1 新增了这些入口。
+请使用新的数据目录试用，保留现有安装及备份；本次不提供业务数据库的原地升级。旧 [preview.1](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.1) 继续保留。检查结果与边界见[当前状态](docs/STATUS.md)和[验证记录](docs/VERIFICATION.md)。
 
 ## 一张订单怎么走完
 
@@ -97,13 +96,13 @@ preview.2 候选保留中文入口，并提供 `Install.cmd`、英文首次账�
 - 当前版本为 **Windows 开发者预览**，安装与业务流程的检查记录见[验证记录](docs/VERIFICATION.md)。
 - 只支持单机使用，不提供局域网多人访问。
 - 预览阶段，升级到新版本时能否直接沿用数据暂不保证。不要把唯一一份真实业务数据放在预览版里，记得定期备份。
-- preview.2 候选支持 **CNY / USD**，不含汇率换算和收付款。客户认可和正式结算不代表收到付款，对账单和送货单不是税务发票，不提供海外税务合规。
+- preview.2支持 **CNY / USD**，不含汇率换算和收付款。客户认可和正式结算不代表收到付款，对账单和送货单不是税务发票，不提供海外税务合规。
 - 界面默认简体中文，可切换 English；内置对账 Excel、送货打印和新归档支持英文，生成时固定语言。客户名称、料号、原件、客户模板及自定义版式文字保持原样；旧导出和归档不因切换语言而改变。
 - 备份和导出文件里有业务资料，需要自己妥善保管。构建输入与第三方材料见[分发说明](docs/DISTRIBUTION.md)。
 
 ## 后续模块与定制需求
 
-成品库存已进入 preview.2 候选。如果你需要其他业务流程，或希望按自己的工厂流程定制功能，欢迎[联系我讨论](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml)。可以先说说谁来用、现在怎么处理、希望解决什么问题，再一起确认范围。
+成品库存已进入 preview.2。如果你需要其他业务流程，或希望按自己的工厂流程定制功能，欢迎[联系我讨论](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml)。可以先说说谁来用、现在怎么处理、希望解决什么问题，再一起确认范围。
 
 目前通过 GitHub 功能建议接收需求。公开留言只需概述场景，不要附真实客户单据或敏感业务资料。
 

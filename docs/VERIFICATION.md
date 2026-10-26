@@ -1,5 +1,13 @@
 # Verification scope / 验证范围
 
+## GitHub Actions — 2026-10-26
+
+[Run 40316043350](https://github.com/Doublzzz/FactoryFlow/actions/runs/40316043350) passed on commit `579fdcb544aa4910a8838bae112d5d1ebe06d059` with a real PostgreSQL 18 service and matching backup tools. The Linux test result was **1003 passed, 10 skipped in 223.26s**; Windows-specific skips retain their platform reasons. The workflow also passed build, Ruff, language, architecture, contract and TypeScript checks. These results complement the 1013-test Windows run below; they do not establish a Linux product package or factory acceptance.
+
+实际 GitHub CI 已通过；Linux 平台跳过项与下方 Windows 全量结果分别记录。发布源码 ZIP 来自版本提交，按仓库规则使用 LF 换行；Windows 包保留已验证输入字节，应用文本在换行规范化后与提交一致。
+
+The publication source ZIP is exported from the release commit, using the repository's LF normalization. The Windows ZIP retains its validated input bytes; application text matches the commit after line-ending normalization. The following section records the earlier local preparation state.
+
 ## preview.2 public candidate — 2026-10-26
 
 This candidate was assembled on public commit `5cfd96a382e61e52cc49d51cb17f3a89b8584f74`. Its source and packages are prepared locally; nothing from this preparation has been committed, pushed or released. The GitHub Actions workflow is configured for push/PR, but has not run on GitHub. YAML and embedded Python syntax checks do not count as a remote CI pass.
