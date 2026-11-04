@@ -2,6 +2,8 @@
 
 ## preview.3 public candidate — 2026-11-04
 
+[Public GitHub run 41860994186](https://github.com/Doublzzz/FactoryFlow/actions/runs/41860994186) on source commit `3b0273334a8ca307eff5c9ef5a3dd096d6fffbe0`: **1,235 passed / 14 skipped** on Linux with PostgreSQL 18; every build/test/style/architecture/contract/typecheck step reported success. The complete job log was retrieved. At publication preparation, GitHub still reported the run/job as `in_progress` with no final conclusion after all steps completed. This records successful checks, not a terminal green CI run. Check the linked run for its current status.
+
 The independent public checkout was validated on Windows with its own Python/Node dependencies and a new disposable PostgreSQL 18 cluster. The full Python suite passed **1,248 tests, with 1 skip and no failures**, in 923.31 seconds. The skip requires an explicitly supplied original PostgreSQL build input for testing the manifest transformation. This release reuses the already transformed runtime after checking every frozen file hash; it does not claim to have rerun that transformation test. All **27 Windows factory-local tests passed**, including the Windows code-page/minimum-version contracts.
 
 Ruff and formatting, four Node language tests, translation coverage (1,783 translations / 1,618 literal calls), architecture, OpenAPI/TypeScript drift, typecheck, frontend build and whitespace checks passed. The web build retains a greater-than-500-kB chunk warning. The dependency install reported five development-dependency audit findings; `npm audit --omit=dev` reported zero production-dependency findings. No dependency upgrades are included in this release.
@@ -14,7 +16,7 @@ A headless isolated browser checked the actual public web assets at 1280, 390 an
 
 公开候选实际验证：Windows 全量 **1,248 passed / 1 skipped**，27 项 Windows 入口合同通过；最终 ZIP 安装、空白设置、订单送货/正式对账 Excel、离线 OCR、重启及独立备份恢复通过。三种宽度、中英文账号布局通过，其 API 为合成模拟。公开包 build 为 `e8afc55a99d89c32`，与已交付的 `b4e2d4b6ea86c4b2` 分别标识。
 
-The maintainer separately confirmed non-test local operation of the delivered base on 2026-11-04. That confirmation does not establish complete factory acceptance of this public ZIP. Clean-machine Windows 10/11, all real workflows, physical printing, arbitrary OCR documents and a user's normal double-click/browser path remain separate acceptance work. GitHub CI for this public revision is recorded when its run finishes; the prior private-repository run is not substituted for it.
+The maintainer separately confirmed non-test local operation of the delivered base on 2026-11-04. That confirmation does not establish complete factory acceptance of this public ZIP. Clean-machine Windows 10/11, all real workflows, physical printing, arbitrary OCR documents and a user's normal double-click/browser path remain separate acceptance work. The public workflow results and remaining run-metadata limitation are recorded above; the private-repository run is not substituted for this public run.
 
 ## Historical releases
 

@@ -2,7 +2,7 @@
 
 ## v0.1.0-preview.3 — 2026-11-04
 
-Public Windows build: `e8afc55a99d89c32`. Local Windows validation: 1,248 passed / 1 skipped; final ZIP installation and isolated backup/restore passed.
+Public Windows build: `e8afc55a99d89c32`. Local Windows validation: 1,248 passed / 1 skipped; final ZIP installation and isolated backup/restore passed. Public CI steps also passed (1,235 / 14 on Linux); GitHub final run metadata was still pending when recorded, as detailed in [VERIFICATION](VERIFICATION.md).
 
 Current source includes supplier purchasing, raw-material inventory, a small production workflow, reviewed purchase-document input and the latest local-installation/OCR/account-layout fixes. Schema head is `0018_purchase_documents`. See [release notes](RELEASE-NOTES.md) for the complete scope and [verification](VERIFICATION.md) for actual checks.
 
