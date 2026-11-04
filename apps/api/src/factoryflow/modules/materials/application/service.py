@@ -17,8 +17,10 @@ class MaterialCatalog:
     def lock(self, actor):
         self.repository.lock(actor)
 
-    def require(self, actor, identifier, expected=None, *, active=True):
+    def require(self, actor, identifier, expected=None, *, active=True, kind=None):
         material = self.repository.get(actor, identifier)
+        if kind is not None and material["kind"] != kind:
+            raise BusinessError("MATERIAL_KIND_MISMATCH", 409)
         if expected is not None and expected != material["version"]:
             raise BusinessError("MATERIAL_VERSION_CONFLICT", 409)
         if active and not material["active"]:
@@ -29,6 +31,8 @@ class MaterialCatalog:
         return self.repository.insert(actor, prepare_material(payload))
 
     def remember(self, actor, customer_id, code, material, source, expected=0, reason=None):
+        if material["kind"] != "finished":
+            raise BusinessError("MATERIAL_KIND_MISMATCH", 409)
         self.customers.require(actor, UUID(str(customer_id)))
         code = text_value(code, "customer_code", 100, required=True)
         before = self.repository.code(actor, customer_id, code)
@@ -49,7 +53,9 @@ class MaterialCatalog:
         return {"before": before, "after": after}
 
     def choose(self, actor, customer_id, line, choice):
-        material = self.require(actor, choice["material_id"], choice["expected_material_version"])
+        material = self.require(
+            actor, choice["material_id"], choice["expected_material_version"], kind="finished"
+        )
         mapping = choice.get("mapping")
         if mapping:
             if (
@@ -81,6 +87,7 @@ class MaterialCatalog:
             source = signature(line)
             matches = (
                 material["active"]
+                and material["kind"] == "finished"
                 and source["canonical_unit"] is not None
                 and all(mapping[field] == value for field, value in source.items())
             )
@@ -220,9 +227,11 @@ class MaterialService:
             work.journal.finish(actor, "material.import", key, result)
             return result
 
-    def list(self, actor, query="", offset=0, limit=50):
+    def list(self, actor, query="", offset=0, limit=50, kind="finished"):
+        if kind not in {"finished", "raw"}:
+            raise BusinessError("INVALID_INPUT", field="kind")
         with self.transaction() as work:
-            return work.catalog.repository.list(actor, query.strip(), offset, limit)
+            return work.catalog.repository.list(actor, query.strip(), offset, limit, kind)
 
     def codes(self, actor, material_id=None, customer_id=None, customer_code=None):
         with self.transaction() as work:
@@ -254,6 +263,8 @@ class MaterialService:
     def update(self, actor, key, identifier, payload):
         actor.require_write()
         data = prepare_material(payload)
+        if payload.get("kind") == "finished":
+            payload = {name: value for name, value in payload.items() if name != "kind"}
         reason = text_value(payload.get("reason"), "reason", 500, required=True)
         with self.transaction() as work:
             prior = work.journal.claim(
@@ -265,6 +276,8 @@ class MaterialService:
             before = work.catalog.require(
                 actor, identifier, payload["expected_version"], active=False
             )
+            if before["kind"] != data.get("kind", "finished"):
+                raise BusinessError("MATERIAL_IDENTITY_IMMUTABLE", 409, field="kind")
             if data["own_code"] is None:
                 raise BusinessError("INVALID_INPUT", field="own_code")
             for field in ("specification", "unit"):

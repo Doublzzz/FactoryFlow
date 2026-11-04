@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>首次设置 · 交有数</title>
+<style>
+:root{font-family:"Microsoft YaHei","Segoe UI",sans-serif;color:#172235;background:#f2f5f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}main{width:min(100% - 32px,540px);margin:48px auto 36px}header{display:flex;align-items:center;gap:12px;margin-bottom:24px}.brand{width:42px;height:42px;background:#2254c5;color:white;display:grid;place-items:center;font-size:22px;font-weight:700;border-radius:8px}header strong{font-size:19px}header span{display:block;font-size:12px;color:#68758a;margin-top:3px}.panel{background:white;padding:28px;border:1px solid #dce3ee;border-radius:12px;box-shadow:0 8px 28px #25385708}h1{font-size:25px;margin:0 0 10px;letter-spacing:-.4px}.intro{font-size:14px;color:#5f6d82;line-height:1.7;margin:0 0 25px}label.field{display:block;font-size:14px;font-weight:600;margin-top:19px}input:not([type=checkbox]){font:inherit;display:block;width:100%;height:44px;border:1px solid #bcc7d8;border-radius:6px;margin-top:8px;padding:9px 12px;background:white;color:#172235}input:focus{outline:3px solid #2254c524;border-color:#2254c5}input[aria-invalid=true]{border-color:#b12828}.password{position:relative}.password input{padding-right:66px}.toggle{position:absolute;right:7px;top:7px;border:0;background:transparent;color:#315aab;font:inherit;font-size:13px;padding:7px;cursor:pointer}.hint{font-size:12px;color:#6b778b;margin:7px 0 0;line-height:1.5}.error{font-size:12px;color:#a82323;line-height:1.5;margin-top:6px;min-height:0}.error:empty{display:none}details{margin-top:23px;color:#536178;font-size:12px;line-height:1.65}summary{cursor:pointer;width:fit-content;color:#455b7b}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;background:#f5f7fa;border:1px solid #e0e6ee;padding:12px;font:12px/1.6 Consolas,monospace}.consent{display:flex;align-items:flex-start;gap:9px;font-size:12px;line-height:1.6;margin:13px 0 0}.consent input{width:16px;height:16px;margin:2px 0 0;flex:0 0 auto;accent-color:#2254c5}.primary{display:block;width:100%;background:#2254c5;color:white;border:0;border-radius:6px;min-height:44px;font:inherit;font-weight:600;font-size:15px;padding:12px 16px;margin-top:24px;cursor:pointer;text-align:center;text-decoration:none}.primary:hover{background:#1945a8}.primary:disabled{opacity:.65;cursor:wait}button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #2254c550;outline-offset:3px}.status{font-size:14px;line-height:1.65;margin:18px 0 0;color:#354966}.status.failure{color:#a82323}.location{overflow-wrap:anywhere;color:#6b778b;font-size:12px;line-height:1.7;margin-top:19px}.location p{margin:4px 0}footer{font-size:12px;color:#7a8799;text-align:center;margin-top:22px}fieldset{border:0;padding:0;margin:0;min-width:0}[hidden]{display:none!important}@media(max-width:540px){main{margin-top:24px;width:min(100% - 24px,540px)}.panel{padding:23px 20px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<main>
+ <header><div class="brand" aria-hidden="true">交</div><div><strong>交有数</strong><span>工厂订单与送货管理 · 测试版</span></div></header>
+ <section class="panel" aria-labelledby="heading">
+  <h1 id="heading">设置你的测试账号</h1>
+  <p class="intro" id="intro">只需设置一次。测试记录保存在这台电脑，下次直接打开即可。</p>
+  <form id="form" novalidate>
+   <fieldset id="inputs" disabled>
+    <div id="account-fields">
+     <label class="field" for="name">工厂名称<input id="name" name="name" maxlength="200" autocomplete="organization" required placeholder="例如：SMOKE 测试工厂" aria-describedby="name-error"></label><div id="name-error" class="error"></div>
+     <label class="field" for="username">登录账号<input id="username" name="username" maxlength="100" autocomplete="username" required aria-describedby="username-error"></label><div id="username-error" class="error"></div>
+     <label class="field" for="password">设置密码</label><div class="password"><input id="password" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required aria-describedby="password-hint password-error"><button type="button" class="toggle" data-target="password" aria-label="显示设置密码" aria-pressed="false">显示</button></div><p id="password-hint" class="hint">12 至 128 个字符，支持字母、数字和符号。</p><div id="password-error" class="error"></div>
+     <label class="field" for="confirmation">确认密码</label><div class="password"><input id="confirmation" name="confirmation" type="password" minlength="12" maxlength="128" autocomplete="new-password" required aria-describedby="confirmation-error"><button type="button" class="toggle" data-target="confirmation" aria-label="显示确认密码" aria-pressed="false">显示</button></div><div id="confirmation-error" class="error"></div>
+    </div>
+    <div id="terms-section"><details><summary>随包组件使用条款</summary><p>以下是随包 Python 中的 Microsoft 组件条件，仅约束这些组件。</p><pre id="terms"></pre></details><label class="consent"><input id="accept_terms" type="checkbox"><span>我已阅读并同意随包组件使用条款</span></label><div id="accept_terms-error" class="error"></div></div>
+    <button class="primary" id="submit" type="submit">完成设置并打开</button>
+   </fieldset>
+  </form>
+  <div id="status" class="status" role="status" aria-live="polite">正在检查本机环境…</div>
+  <a id="enter" class="primary" hidden>进入交有数</a>
+  <button id="retry" class="primary" type="button" hidden>检查状态并重新打开</button>
+  <details class="location"><summary>测试数据保存位置</summary><p id="data-directory"></p><p>测试记录不会同步到另一台电脑。</p></details>
+ </section>
+ <footer>本机离线运行</footer>
+</main>
+<script nonce="__CSP_NONCE__">
+const $ = id => document.getElementById(id);
+const fragment = location.hash.slice(1);
+if (fragment) { sessionStorage.setItem('factoryflow-setup-token', fragment); history.replaceState(null, '', '/'); }
+const token = sessionStorage.getItem('factoryflow-setup-token') || '';
+let current = null;
+let busy = false;
+const fields = ['name','username','password','confirmation','accept_terms'];
+async function call(path, body) {
+ const response = await fetch(path, {method: body === undefined ? 'GET' : 'POST', headers: {'X-FactoryFlow-Setup':token, ...(body === undefined ? {} : {'Content-Type':'application/json'})}, ...(body === undefined ? {} : {body:JSON.stringify(body)}), cache:'no-store'});
+ const value = await response.json();
+ if (!response.ok) throw new Error(value.message || '页面连接中断，请重新打开启动入口。');
+ return value;
+}
+function errors(values = {}) {
+ fields.forEach(key => { $(key+'-error').textContent = values[key] || ''; $(key).setAttribute('aria-invalid', values[key] ? 'true' : 'false'); });
+}
+function show(value) {
+ current = {...current, ...value};
+ $('inputs').disabled = false;
+ $('status').classList.toggle('failure', value.phase === 'failed');
+ $('status').textContent = value.message || value.errors?.form || '';
+ errors(value.errors);
+ if (value.phase === 'ready') {
+  $('heading').textContent = '可以开始了'; $('intro').textContent = '使用刚才设置的账号登录，开始你的测试。';
+  $('form').hidden = true; $('retry').hidden = true;
+  $('enter').href = value.url; $('enter').hidden = false; $('enter').focus();
+  fields.filter(key => key !== 'accept_terms').forEach(key => { $(key).value = ''; });
+ } else if (value.phase === 'failed') {
+  $('status').textContent = value.message + (value.detail ? ' '+value.detail : '');
+  $('inputs').disabled = true; $('retry').hidden = !value.can_retry;
+ } else {
+  const firstError = fields.find(key => value.errors?.[key]);
+  if (firstError) $(firstError).focus();
+ }
+}
+function initialize(value) {
+ $('terms').textContent = value.terms;
+ $('data-directory').textContent = value.data_directory;
+ $('account-fields').hidden = value.existing;
+ $('terms-section').hidden = !value.terms_required;
+ if (value.existing) { $('heading').textContent = '打开你的测试环境'; $('intro').textContent = '已有账号和记录会保留。'; $('submit').textContent = '打开交有数'; }
+ show(value);
+}
+async function submit(body) {
+ if (busy) return;
+ busy = true; errors(); $('inputs').disabled = true; $('retry').disabled = true;
+ $('status').classList.remove('failure'); $('status').textContent = '正在准备软件，请稍候…';
+ try { show(await call('/start', body)); }
+ catch (error) {
+  // Check the actual result after a lost response; never resend credentials automatically.
+  try { initialize(await call('/state')); }
+  catch { $('status').classList.add('failure'); $('status').textContent = error.message + ' 请保留当前页面；重新打开启动入口会检查已有状态。'; }
+ } finally { busy = false; $('retry').disabled = false; }
+}
+$('form').addEventListener('submit', event => {
+ event.preventDefault(); if (busy) return;
+ const body = Object.fromEntries(fields.map(key => [key, key === 'accept_terms' ? $(key).checked : $(key).value]));
+ const invalid = {};
+ if (!current?.existing) {
+  if (!body.name.trim()) invalid.name = '请填写工厂名称。';
+  if (!body.username.trim()) invalid.username = '请填写登录账号。';
+  if (body.password.length < 12 || body.password.length > 128) invalid.password = '密码须为 12 至 128 个字符。';
+  if (body.confirmation !== body.password) invalid.confirmation = '两次密码不同，请检查后再试。';
+ }
+ if (current?.terms_required && !body.accept_terms) invalid.accept_terms = '请先阅读并同意随包组件条款。';
+ if (Object.keys(invalid).length) { show({phase:'form', errors:invalid, message:'请检查下面标出的内容。'}); return; }
+ submit(body);
+});
+document.querySelectorAll('.toggle').forEach(button => button.addEventListener('click', () => {
+ const input = $(button.dataset.target), visible = input.type === 'password';
+ input.type = visible ? 'text' : 'password'; button.textContent = visible ? '隐藏' : '显示';
+ button.setAttribute('aria-pressed', String(visible)); button.setAttribute('aria-label', (visible ? '隐藏' : '显示') + (input.id === 'password' ? '设置密码' : '确认密码'));
+}));
+$('retry').addEventListener('click', () => submit({}));
+call('/state').then(initialize).catch(error => { $('status').classList.add('failure'); $('status').textContent = error.message; });
+</script>
+</body>
+</html>

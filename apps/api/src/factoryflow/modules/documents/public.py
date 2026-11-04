@@ -1,4 +1,5 @@
 from factoryflow.modules.documents.application.archive import ArchiveDocuments
+from factoryflow.modules.documents.application.purchasing import PurchaseEvidence
 from factoryflow.modules.documents.application.service import Documents, EvidenceStore
 
-__all__ = ["Documents", "EvidenceStore", "ArchiveDocuments"]
+__all__ = ["Documents", "EvidenceStore", "ArchiveDocuments", "PurchaseEvidence"]

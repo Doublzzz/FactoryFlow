@@ -14,6 +14,8 @@ class IdentityRepository(Protocol):
     def create_organization(self, organization_id: UUID, name: str) -> None: ...
     def create_user(self, actor: Actor, password_hash: str) -> None: ...
     def lock_user(self, username: str) -> dict | None: ...
+    def lock_local_admin(self) -> dict: ...
+    def replace_password(self, user_id: UUID, password_hash: str) -> None: ...
     def login_result(self, user_id: UUID, success: bool, now: datetime) -> None: ...
     def create_session(self, actor: Actor, digest: str, csrf: str, expires: datetime) -> None: ...
     def session(self, digest: str) -> dict | None: ...
@@ -33,6 +35,23 @@ def token_digest(token: str) -> str:
 class IdentityService:
     def __init__(self, transaction):
         self.transaction = transaction
+
+    def local_admin(self) -> Actor:
+        """Local maintenance only; deliberately not exposed through HTTP."""
+        with self.transaction() as work:
+            user = work.identities.lock_local_admin()
+            return Actor(user["organization_id"], user["id"], user["username"], user["role"])
+
+    def reset_local_admin_password(self, expected: Actor, password: str) -> None:
+        """The local launcher verifies OS access, database ownership and explicit consent."""
+        password_hash = hash_password(password)
+        with self.transaction() as work:
+            user = work.identities.lock_local_admin()
+            current = Actor(user["organization_id"], user["id"], user["username"], user["role"])
+            if current != expected:
+                raise BusinessError("RECOVERY_ACCOUNT_CHANGED", 409)
+            work.identities.replace_password(current.user_id, password_hash)
+            work.journal.audit(current, "identity.local_password_reset", current.user_id)
 
     def provision_factory(self, name: str, username: str, password: str) -> Actor:
         if not name.strip() or len(name) > 200 or not username.strip() or len(username) > 100:

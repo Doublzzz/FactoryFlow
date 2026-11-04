@@ -56,6 +56,54 @@ class ExtractionPage(StrictDTO):
     rows: list[str]
 
 
+class PurchaseSheetColumns(StrictDTO):
+    item_code: int | None = Field(default=None, ge=1, le=30)
+    item_name: int | None = Field(default=None, ge=1, le=30)
+    specification: int | None = Field(default=None, ge=1, le=30)
+    quantity: int | None = Field(default=None, ge=1, le=30)
+    unit: int | None = Field(default=None, ge=1, le=30)
+    source_unit_price: int | None = Field(default=None, ge=1, le=30)
+    source_amount: int | None = Field(default=None, ge=1, le=30)
+
+
+class PurchaseSheetMapping(StrictDTO):
+    header_row: int = Field(ge=1, le=50)
+    first_row: int = Field(ge=2, le=300)
+    last_row: int = Field(ge=2, le=300)
+    columns: PurchaseSheetColumns
+
+
+class PurchaseSheetCell(StrictDTO):
+    address: str
+    column: int
+    text: str
+    raw_value: str
+    kind: Literal["text", "number", "date", "error", "boolean"]
+    number_format: str
+    formula: str | None = None
+
+
+class PurchaseSheetRow(StrictDTO):
+    row_number: int
+    cells: list[PurchaseSheetCell]
+
+
+class PurchaseSheetMerge(StrictDTO):
+    first_row: int
+    last_row: int
+    first_column: int
+    last_column: int
+
+
+class PurchaseSheet(StrictDTO):
+    sheet_name: str
+    max_row: int
+    max_column: int
+    rows: list[PurchaseSheetRow]
+    merges: list[PurchaseSheetMerge]
+    suggested_mapping: PurchaseSheetMapping
+
+
 class ExtractionDetail(ExtractionResult):
     source_id: UUID
     trace_hash: str
@@ -63,6 +111,9 @@ class ExtractionDetail(ExtractionResult):
     error_code: str | None
     candidate: Candidate
     pages: list[ExtractionPage]
+    purpose: Literal["sales_order", "purchase_order"] = "sales_order"
+    media_type: str | None = None
+    spreadsheet: PurchaseSheet | None = None
 
 
 class SourceSummary(StrictDTO):
@@ -71,7 +122,9 @@ class SourceSummary(StrictDTO):
     media_type: str
     created_at: str
     extraction_id: UUID | None
+    extraction_status: Literal["ready", "failed"] | None = None
     order_id: UUID | None
+    purpose: Literal["sales_order", "purchase_order"] = "sales_order"
 
 
 class SourceList(StrictDTO):
@@ -88,7 +141,12 @@ class SourceList(StrictDTO):
             "required": True,
             "content": {
                 media: {"schema": {"type": "string", "format": "binary", "maxLength": 10485760}}
-                for media in ("image/png", "image/jpeg", "application/pdf")
+                for media in (
+                    "image/png",
+                    "image/jpeg",
+                    "application/pdf",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
             },
         }
     },
@@ -99,6 +157,7 @@ async def upload_source(
     idempotency_key: CommandKey,
     filename: Annotated[str, Header(alias="X-Filename", max_length=2200)],
     content_type: Annotated[str, Header()],
+    purpose: Literal["sales_order", "purchase_order"] = "sales_order",
 ):
     actor.require_write()
     chunks = bytearray()
@@ -113,6 +172,7 @@ async def upload_source(
         unquote(filename),
         content_type,
         bytes(chunks),
+        purpose,
     )
 
 
@@ -122,16 +182,25 @@ def sources(
     actor: CurrentActor,
     cursor: UUID | None = None,
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    purpose: Literal["sales_order", "purchase_order"] = "sales_order",
 ):
-    return services(request).extraction.list(actor, cursor, limit)
+    return services(request).extraction.list(actor, cursor, limit, purpose)
+
+
+@router.get("/sources/{source_id}", operation_id="getSource", response_model=SourceSummary)
+def source_summary(source_id: UUID, request: Request, actor: CurrentActor):
+    return services(request).extraction.summary(actor, source_id)
 
 
 @router.get("/sources/{source_id}/download", operation_id="downloadSource")
 def original(source_id: UUID, request: Request, actor: CurrentActor):
     row, content = services(request).extraction.original(actor, source_id)
-    extension = {"image/png": "png", "image/jpeg": "jpg", "application/pdf": "pdf"}[
-        row["media_type"]
-    ]
+    extension = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "application/pdf": "pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    }[row["media_type"]]
     return Response(
         content,
         media_type="application/octet-stream",
@@ -156,11 +225,24 @@ def extract(source_id: UUID, request: Request, actor: CurrentActor, idempotency_
 )
 def extraction(extraction_id: UUID, request: Request, actor: CurrentActor):
     detail = services(request).extraction.detail(actor, extraction_id)
-    return {key: detail[key] for key in ExtractionDetail.model_fields if key != "pages"} | {
+    return {key: detail.get(key) for key in ExtractionDetail.model_fields if key != "pages"} | {
         "pages": [
             {key: page[key] for key in ExtractionPage.model_fields} for page in detail["pages"]
         ]
     }
+
+
+@router.post(
+    "/extractions/{extraction_id}/purchase-preview",
+    operation_id="previewPurchaseSheet",
+    response_model=Candidate,
+)
+def preview_purchase_sheet(
+    extraction_id: UUID, body: PurchaseSheetMapping, request: Request, actor: CurrentActor
+):
+    return services(request).extraction.preview_purchase_sheet(
+        actor, extraction_id, body.model_dump(mode="json")
+    )
 
 
 @router.get("/extractions/{extraction_id}/pages/{number}", operation_id="getSourcePage")

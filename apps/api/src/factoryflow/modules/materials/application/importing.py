@@ -164,6 +164,8 @@ def build_import_plan(catalog, actor, table, payload):
                     row["issues"].append("CANDIDATE_REVIEW")
         if row["material"] and not row["material"]["active"]:
             row["issues"].append("TARGET_INACTIVE")
+        if row["material"] and row["material"]["kind"] != "finished":
+            row["issues"].append("TARGET_KIND_MISMATCH")
         row["mapping"] = None
         if source["customer_code"]:
             if not customer:

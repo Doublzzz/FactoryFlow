@@ -44,6 +44,33 @@ class IdentityRepository:
         )
         return dict(row) if row else None
 
+    def lock_local_admin(self):
+        # Serialize local recovery against login/account writes while checking uniqueness.
+        self.conn.execute(text("LOCK TABLE users IN EXCLUSIVE MODE"))
+        rows = (
+            self.conn.execute(
+                text(
+                    "SELECT id,organization_id,username,role FROM users "
+                    "WHERE active AND role='admin'"
+                )
+            )
+            .mappings()
+            .all()
+        )
+        if len(rows) != 1:
+            raise BusinessError("RECOVERY_ADMIN_NOT_UNIQUE", 409)
+        return dict(rows[0])
+
+    def replace_password(self, user_id, password_hash):
+        self.conn.execute(
+            text(
+                "UPDATE users SET password_hash=:password,failed_attempts=0,locked_until=NULL "
+                "WHERE id=:id"
+            ),
+            {"id": user_id, "password": password_hash},
+        )
+        self.conn.execute(text("DELETE FROM sessions WHERE user_id=:id"), {"id": user_id})
+
     def login_result(self, user_id, success, now):
         if success:
             self.conn.execute(

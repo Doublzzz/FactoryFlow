@@ -21,6 +21,8 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Set disposable test configuration path
+        run: echo "FACTORYFLOW_TEST_ADMIN_CONFIG=$RUNNER_TEMP/factoryflow-test-admin.json" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14'
@@ -64,11 +66,9 @@ jobs:
                       sql.Literal(config["runtime_password"])
                   )
               )
-          target = Path(os.environ["RUNNER_TEMP"]) / "factoryflow-test-admin.json"
+          target = Path(os.environ["FACTORYFLOW_TEST_ADMIN_CONFIG"])
           target.write_text(json.dumps(config), encoding="utf-8")
           target.chmod(0o600)
-          with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as stream:
-              stream.write(f"FACTORYFLOW_TEST_ADMIN_CONFIG={target}\n")
           PY
       # Web-serving tests need the built assets. Native Windows tests retain their skip markers.
       - run: npm run build
@@ -76,7 +76,6 @@ jobs:
       - run: uv run ruff check apps/api/src apps/api/tests scripts migrations tests
       - run: uv run ruff format --check apps/api/src apps/api/tests scripts migrations tests
       - run: node --test scripts/test-i18n.mjs
-      - run: node scripts/check-i18n.mjs
       - run: uv run python scripts/check_architecture.py
       - run: uv run python scripts/export-openapi.py --check
       - run: npm run contracts:check

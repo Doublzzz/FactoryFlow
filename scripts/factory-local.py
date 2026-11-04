@@ -3,6 +3,7 @@
 import argparse
 import ctypes
 import getpass
+import hashlib
 import json
 import os
 import re
@@ -105,12 +106,13 @@ def free_port():
         return listener.getsockname()[1]
 
 
-def pg(name, *args, check=True):
+def pg(name, *args, check=True, output=None):
+    path_encoding()
     result = subprocess.run(
         [str(BIN / f"{name}.exe"), *map(str, args)],
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL if output is None else output,
+        stderr=subprocess.DEVNULL if output is None else output,
         timeout=60,
         creationflags=FLAGS,
     )
@@ -129,12 +131,118 @@ def database_start(root):
     database_identity(root)
 
 
+def path_encoding():
+    # A process UTF-8 runtime is independent of the Windows system ANSI code page.
+    marker = "runtime/postgresql/path-encoding.json"
+    try:
+        bundle = read(PROJECT / "bundle.json")
+        files = bundle["files"]
+        declared = bundle.get("postgresql_path_encoding")
+        if declared is not None or marker in files or (PROJECT / marker).exists():
+            raw = (PROJECT / marker).read_bytes()
+            runtime = json.loads(raw)
+            if (
+                declared != "utf-8"
+                or hashlib.sha256(raw).hexdigest() != files.get(marker)
+                or runtime["kind"] != "factoryflow-postgresql-utf8-v1"
+                or runtime["encoding"] != "utf-8"
+                or runtime["minimum_windows_build"] != 18362
+            ):
+                raise ValueError
+            if os.name != "nt" or sys.getwindowsversion().build < 18362:
+                raise LocalError(
+                    tr(
+                        "此版本需要 Windows 10 1903 或更新版本，或 Windows 11。",
+                        "This version requires Windows 10 1903 or later, or Windows 11.",
+                    )
+                )
+            executables = runtime["executables"]
+            required = {"initdb.exe", "postgres.exe", "pg_ctl.exe", "pg_dump.exe", "pg_restore.exe"}
+            if not required <= executables.keys():
+                raise ValueError
+            for name, record in executables.items():
+                if not re.fullmatch(r"[a-z0-9_]+\.exe", name):
+                    raise ValueError
+                expected = files.get(f"runtime/postgresql/bin/{name}")
+                with direct(BIN / name).open("rb") as stream:
+                    actual = hashlib.file_digest(stream, "sha256").hexdigest()
+                if record["sha256"] != expected or actual != expected:
+                    raise ValueError
+            return "utf-8"
+        if bundle.get("kind") != "factoryflow-offline-v1" or not isinstance(files, dict):
+            raise ValueError
+    except LocalError:
+        raise
+    except OSError, ValueError, KeyError, TypeError, AttributeError:
+        raise LocalError(
+            tr(
+                "数据库运行库校验失败，请重新解压完整安装包；已有数据未改动。",
+                "Database runtime validation failed. Extract the complete bundle again; "
+                "existing data was not changed.",
+            )
+        ) from None
+    # Older bundles did not declare a process code page. Decode only their system ACP.
+    return (
+        f"cp{ctypes.windll.kernel32.GetACP()}" if os.name == "nt" else sys.getfilesystemencoding()
+    )
+
+
 def database_identity(root):
     _, state = environment(root)
+    database_executable(root)
     with psycopg.connect(state["admin_url"], connect_timeout=3) as conn:
-        data = conn.execute("SHOW data_directory").fetchone()[0]
-        if Path(data).resolve() != (root / "pgdata").resolve():
+        value = conn.execute(
+            "SELECT encode(pg_catalog.textsend(current_setting('data_directory')), 'hex')"
+        ).fetchone()[0]
+        try:
+            raw = bytes.fromhex(value)
+            encoding = path_encoding()
+            data = raw.decode(encoding, errors="strict")
+            if data.encode(encoding, errors="strict") != raw or "\0" in data:
+                raise ValueError
+        except ValueError, UnicodeError, TypeError:
+            raise LocalError(
+                "Cannot verify database path encoding; process left untouched"
+            ) from None
+        if not Path(data).is_absolute() or Path(data).resolve() != (root / "pgdata").resolve():
             raise LocalError("Database process belongs to another data directory")
+
+
+def process_image(pid):
+    kernel, handle = _process_handle(pid, 0x1000)
+    if not handle:
+        raise LocalError("Cannot verify database process executable; process left untouched")
+    try:
+        kernel.QueryFullProcessImageNameW.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_uint32,
+            ctypes.c_wchar_p,
+            ctypes.POINTER(ctypes.c_uint32),
+        ]
+        buffer = ctypes.create_unicode_buffer(32768)
+        length = ctypes.c_uint32(len(buffer))
+        if not kernel.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(length)):
+            raise LocalError("Cannot verify database process executable; process left untouched")
+        return Path(buffer.value)
+    finally:
+        kernel.CloseHandle(handle)
+
+
+def database_executable(root):
+    try:
+        pid = int(direct(root / "pgdata/postmaster.pid").read_bytes().splitlines()[0])
+        if pid < 1:
+            raise ValueError
+    except OSError, ValueError, IndexError:
+        raise LocalError("Cannot verify database process record; process left untouched") from None
+    if process_image(pid).resolve() != (BIN / "postgres.exe").resolve():
+        raise LocalError(
+            tr(
+                "数据库由另一个版本运行，请先用原版本的停止入口关闭，再启动此版本；未停止任何进程。",
+                "The database is running from another version. Stop it using that version's "
+                "entry point before starting this version; no process was stopped.",
+            )
+        )
 
 
 def _process_handle(pid, access):
@@ -229,6 +337,9 @@ def stop_api(root):
 
 def stop(root):
     _, state = environment(root)
+    # Reject another package's running database before stopping even our recorded API.
+    if pg("pg_ctl", "-D", root / "pgdata", "status", check=False) == 0:
+        database_identity(root)
     stop_api(root)
     available(state["api_port"])
     if pg("pg_ctl", "-D", root / "pgdata", "status", check=False) == 0:
@@ -258,6 +369,7 @@ def owned(path):
         "archives",
         "server-process.json",
         "postgres.log",
+        "initdb.log",
         "server.log",
     ):
         direct(root / name)
@@ -441,6 +553,7 @@ def serve(root):
 
 
 def new_cluster(api_port=None):
+    path_encoding()
     root = direct(BASE / "environments" / uuid4().hex)
     root.mkdir(parents=True)
     save(root / "owner.json", {"kind": KIND, "id": root.name})
@@ -461,18 +574,20 @@ def new_cluster(api_port=None):
     try:
         try:
             password_file.write_text(admin_password, encoding="utf-8")
-            pg(
-                "initdb",
-                "-D",
-                root / "pgdata",
-                "-U",
-                "ff_admin",
-                "--pwfile",
-                password_file,
-                "--auth=scram-sha-256",
-                "--encoding=UTF8",
-                "--locale=C",
-            )
+            with direct(root / "initdb.log").open("ab") as output:
+                pg(
+                    "initdb",
+                    "-D",
+                    root / "pgdata",
+                    "-U",
+                    "ff_admin",
+                    "--pwfile",
+                    password_file,
+                    "--auth=scram-sha-256",
+                    "--encoding=UTF8",
+                    "--locale=C",
+                    output=output,
+                )
         finally:
             password_file.unlink(missing_ok=True)
         with (root / "pgdata/postgresql.conf").open("a", encoding="utf-8") as stream:
@@ -502,9 +617,10 @@ def new_cluster(api_port=None):
             ) from None
         raise LocalError(
             tr(
-                f"首次建立未完成，目录 {root.name} 已停止并保留；请检查随包运行库。",
+                f"首次建立未完成，目录 {root.name} 已停止并保留；"
+                "请保留该目录中的 initdb.log 和 postgres.log 供检查。",
                 f"Initial setup failed. Directory {root.name} was stopped and retained; "
-                "check the bundled runtimes.",
+                "retain its initdb.log and postgres.log for inspection.",
             )
         ) from None
     return root
@@ -527,6 +643,17 @@ def prepare(name, username, password):
     if not 12 <= len(password) <= 128:
         raise LocalError(
             tr("密码须为 12 至 128 个字符。", "Password must contain 12 to 128 characters.")
+        )
+    environments = direct(BASE / "environments")
+    if environments.exists() and any(environments.iterdir()):
+        raise LocalError(
+            tr(
+                "发现未完成的首次设置，已保留原目录，没有再次建库。"
+                "请联系维护人员检查日志和进程状态，不要反复重试。",
+                "An incomplete first setup already exists. Its files were retained; "
+                "no new database was created. Have support inspect logs and process status "
+                "before trying again.",
+            )
         )
     root = new_cluster()
     try:
@@ -614,7 +741,7 @@ def open_browser(url):
     for executable in candidates:
         if executable.is_file():
             subprocess.Popen([str(executable), url], creationflags=FLAGS)
-            return
+            return True
     print(
         tr(
             "请用 Chrome 或新版 Edge 打开：",
@@ -622,6 +749,7 @@ def open_browser(url):
         )
         + url
     )
+    return False
 
 
 def password_input(prompt):
@@ -654,6 +782,7 @@ def main():
             parser.error("serve requires --root")
         serve(args.root)
         return
+    path_encoding()
     with maintenance_lock():
         if args.action == "start":
             if not (BASE / "active.json").exists():

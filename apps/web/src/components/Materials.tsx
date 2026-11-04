@@ -5,10 +5,10 @@ import { MaterialFields } from "./MaterialSelect";
 import { MaterialImport } from "./MaterialImport";
 import { displayUnit } from "../units";
 
-function MaterialEditor({ current, onSaved, onClose }: {
-  current: Material | null; onSaved: () => void; onClose: () => void;
+function MaterialEditor({ current, materialKind, onSaved, onClose }: {
+  current: Material | null; materialKind: "finished" | "raw"; onSaved: () => void; onClose: () => void;
 }) {
-  const [draft, setDraft] = useState<MaterialInput>(current ? { own_code: current.own_code, name: current.name, specification: current.specification ?? null, unit: current.unit ?? null } : { name: "", own_code: "", specification: "", unit: "" });
+  const [draft, setDraft] = useState<MaterialInput>(current ? { kind: current.kind, own_code: current.own_code, name: current.name, specification: current.specification ?? null, unit: current.unit ?? null } : { kind: materialKind, name: "", own_code: "", specification: "", unit: "" });
   const [active, setActive] = useState(current?.active ?? true);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -25,13 +25,13 @@ function MaterialEditor({ current, onSaved, onClose }: {
       if (current) await api.updateMaterial(current.id, { ...command.body, expected_version: current.version, reason: command.reason, active: command.active }, command.key);
       else await api.createMaterial(command.body, command.key);
       setUncertain(false); onSaved();
-    } catch (failure) { setError(message(failure)); setUncertain(!(failure instanceof ApiError) || failure.status >= 500); }
+    } catch (failure) { setError(message(failure)); setUncertain(previous => previous || !(failure instanceof ApiError) || failure.status >= 500); }
     finally { setBusy(false); }
   }
   return <section className="work-panel material-editor"><h2>{current ? t("维护物料") : t("新建物料")}</h2>
     <p className="muted">{current ? t("更正料号或名称保留物料身份；停用后保留原关联。已有规格和单位在这里保留，可补齐空白项。") : t("只需填写名称。已有我方料号就沿用，没有则留空，保存时自动编号。")}</p>
     <form onSubmit={save}><MaterialFields value={draft} onChange={setDraft} disabled={busy || uncertain} {...(current ? { fixed: current } : {})} />
-      {current && <><label className="checkbox"><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} disabled={busy || uncertain} />{t("允许新订单选择这条物料")}</label><label>{t("维护原因")}<textarea value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} disabled={busy || uncertain} /></label></>}
+      {current && <><label className="checkbox"><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} disabled={busy || uncertain} />{materialKind === "raw" ? t("允许采购与收料选择") : t("允许新订单选择这条物料")}</label><label>{t("维护原因")}<textarea value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} disabled={busy || uncertain} /></label></>}
       {error && <p role="alert" className="error">{t(error)}</p>}{uncertain && <p className="warning" role="status">{t("结果待确认。请重试本次保存，不会重复建档。")}</p>}
       <div className="actions"><button disabled={busy || !draft.name.trim()}>{busy ? t("保存中…") : uncertain ? t("重试本次保存") : current ? t("保存物料更正") : t("保存物料")}</button><button type="button" className="secondary" onClick={onClose} disabled={busy || uncertain}>{t("取消")}</button></div>
     </form>
@@ -97,9 +97,10 @@ function MaterialCodes({ material, customers, canWrite, onClose }: {
   </section>;
 }
 
-export function Materials({ customers, canWrite, onGuardChange }: {
-  customers: Customer[]; canWrite: boolean; onGuardChange: (blocked: boolean) => void;
+export function Materials({ customers, canWrite, onGuardChange, initialKind = "finished" }: {
+  customers: Customer[]; canWrite: boolean; onGuardChange: (blocked: boolean) => void; initialKind?: "finished" | "raw";
 }) {
+  const [materialKind, setMaterialKind] = useState<"finished" | "raw">(initialKind);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("");
   const [offset, setOffset] = useState(0);
@@ -116,16 +117,17 @@ export function Materials({ customers, canWrite, onGuardChange }: {
     if (panel) window.addEventListener("beforeunload", prevent);
     return () => { onGuardChange(false); window.removeEventListener("beforeunload", prevent); };
   }, [panel, onGuardChange]);
-  useEffect(() => { let live = true; setLoading(true); setError(""); api.materials(filter, offset).then(result => { if (live) { setItems(result.items); setNext(result.next_offset); } }).catch(failure => { if (live) setError(message(failure)); }).finally(() => { if (live) setLoading(false); }); return () => { live = false; }; }, [filter, offset, refresh]);
+  useEffect(() => { let live = true; setLoading(true); setError(""); api.materials(filter, offset, materialKind).then(result => { if (live) { setItems(result.items); setNext(result.next_offset); } }).catch(failure => { if (live) setError(message(failure)); }).finally(() => { if (live) setLoading(false); }); return () => { live = false; }; }, [filter, offset, refresh, materialKind]);
   if (panel?.kind === "import") return <MaterialImport customers={customers} onClose={() => setPanel(null)} onImported={result => { setPanel(null); setOffset(0); setNotice(msg("导入完成：新建 {0} 条、关联已有 {1} 条、跳过 {2} 行。", [result.created_count, result.reused_count, result.skipped_count])); setRefresh(value => value + 1); }} />;
   return <section className="work-page materials-page">
-    <div className="page-heading"><div><h1>{t("物料池")}</h1><p>{t("统一我方料号，记住各客户的料号。订单可以先做，需要时再收录。")}</p></div>{canWrite && <div className="actions"><button className="secondary" onClick={() => { setPanel({ kind: "import" }); setNotice(""); }} disabled={!!panel}>{t("导入资料表")}</button><button onClick={() => { setPanel({ kind: "edit", item: null }); setNotice(""); }} disabled={!!panel}>{t("新建物料")}</button></div>}</div>
+    <div className="page-heading"><div><h1>{t("物料池")}</h1><p>{materialKind === "raw" ? t("原料用于采购和领用；建档后按实际数量开账。") : t("统一我方料号，记住各客户的料号。订单可以先做，需要时再收录。")}</p></div>{canWrite && <div className="actions">{materialKind === "finished" && <button className="secondary" onClick={() => { setPanel({ kind: "import" }); setNotice(""); }} disabled={!!panel}>{t("导入资料表")}</button>}<button onClick={() => { setPanel({ kind: "edit", item: null }); setNotice(""); }} disabled={!!panel}>{t("新建物料")}</button></div>}</div>
+    <div className="actions" aria-label={t("物料类别")}>{(["finished", "raw"] as const).map(kind => <button key={kind} className="secondary" type="button" aria-pressed={materialKind === kind} disabled={!!panel} onClick={() => { setMaterialKind(kind); setOffset(0); setQuery(""); setFilter(""); setItems([]); setNotice(""); }}>{kind === "raw" ? t("原料") : t("成品")}</button>)}</div>
     {notice && <p className="success" role="status">{t(notice)}</p>}
-    {panel?.kind === "edit" && <MaterialEditor key={panel.item?.id ?? "new"} current={panel.item} onClose={() => setPanel(null)} onSaved={() => { setPanel(null); setNotice(msg("物料已保存。")); setRefresh(value => value + 1); }} />}
+    {panel?.kind === "edit" && <MaterialEditor key={panel.item?.id ?? "new"} current={panel.item} materialKind={materialKind} onClose={() => setPanel(null)} onSaved={() => { setPanel(null); setNotice(msg("物料已保存。")); setRefresh(value => value + 1); }} />}
     {panel?.kind === "codes" && <MaterialCodes key={panel.item.id} material={panel.item} customers={customers} canWrite={canWrite} onClose={() => { setPanel(null); setRefresh(value => value + 1); }} />}
-    <section className="work-panel"><form className="material-search" onSubmit={event => { event.preventDefault(); setOffset(0); setFilter(query.trim()); setRefresh(value => value + 1); }}><label>{t("搜索物料")}<input value={query} onChange={e => setQuery(e.target.value)} placeholder={t("我方料号、客户料号、名称或规格")} disabled={!!panel} /></label><button className="secondary" disabled={!!panel}>{t("查询")}</button></form>
+    <section className="work-panel"><form className="material-search" onSubmit={event => { event.preventDefault(); setOffset(0); setFilter(query.trim()); setRefresh(value => value + 1); }}><label>{t("搜索物料")}<input value={query} onChange={e => setQuery(e.target.value)} placeholder={materialKind === "raw" ? t("我方料号、名称或规格") : t("我方料号、客户料号、名称或规格")} disabled={!!panel} /></label><button className="secondary" disabled={!!panel}>{t("查询")}</button></form>
       {error && <p className="error" role="alert">{t(error)}</p>}
-      {loading ? <p role="status">{t("正在读取物料…")}</p> : !items.length ? <p className="empty-copy">{filter ? t("没有找到匹配的物料。") : t("还没有物料。可在这里新建，也可以先下订单，之后从订单明细收录。")}</p> : <div className="table-wrap"><table><thead><tr><th>{t("我方料号")}</th><th>{t("物料名称 / 规格")}</th><th>{t("基本单位")}</th><th>{t("状态")}</th><th>{t("操作")}</th></tr></thead><tbody>{items.map(item => <tr key={item.id}><td>{item.own_code}</td><td><strong>{item.name}</strong><small className="material-spec">{item.specification || t("规格暂缺")}</small>{item.matched_customer_codes?.map(code => <small className="material-spec" key={`${code.customer_name}:${code.customer_code}`}>{t("客户：{0} · 料号：{1}", [(code.customer_name) ?? "", (code.customer_code) ?? ""])}</small>)}</td><td>{displayUnit(item.unit)}</td><td>{item.active ? t("可用") : t("已停用")}</td><td><div className="actions"><button className="text-button" disabled={!!panel} onClick={() => setPanel({ kind: "codes", item })}>{t("客户料号")}</button>{canWrite && <button className="text-button" disabled={!!panel} onClick={() => setPanel({ kind: "edit", item })}>{t("维护")}</button>}</div></td></tr>)}</tbody></table></div>}
+      {loading ? <p role="status">{t("正在读取物料…")}</p> : !items.length ? <p className="empty-copy">{filter ? t("没有找到匹配的物料。") : materialKind === "raw" ? t("还没有原料，请先新建原料档案。") : t("还没有物料。可在这里新建，也可以先下订单，之后从订单明细收录。")}</p> : <div className="table-wrap"><table><thead><tr><th>{t("我方料号")}</th><th>{t("物料名称 / 规格")}</th><th>{t("基本单位")}</th><th>{t("状态")}</th><th>{t("操作")}</th></tr></thead><tbody>{items.map(item => <tr key={item.id}><td>{item.own_code}</td><td><strong>{item.name}</strong><small className="material-spec">{item.specification || t("规格暂缺")}</small>{item.matched_customer_codes?.map(code => <small className="material-spec" key={`${code.customer_name}:${code.customer_code}`}>{t("客户：{0} · 料号：{1}", [(code.customer_name) ?? "", (code.customer_code) ?? ""])}</small>)}</td><td>{displayUnit(item.unit)}</td><td>{item.active ? t("可用") : t("已停用")}</td><td><div className="actions">{materialKind === "finished" && <button className="text-button" disabled={!!panel} onClick={() => setPanel({ kind: "codes", item })}>{t("客户料号")}</button>}{canWrite && <button className="text-button" disabled={!!panel} onClick={() => setPanel({ kind: "edit", item })}>{t("维护")}</button>}</div></td></tr>)}</tbody></table></div>}
       <div className="actions">{offset > 0 && <button className="secondary" disabled={loading || !!panel} onClick={() => setOffset(Math.max(0, offset - 50))}>{t("上一页")}</button>}{next !== null && <button className="secondary" disabled={loading || !!panel} onClick={() => setOffset(next)}>{t("下一页")}</button>}</div>
     </section>
   </section>;

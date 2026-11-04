@@ -1,14 +1,29 @@
-import { t } from "../i18n";
+import { msg, t, type UiMessage } from "../i18n";
 import { useState } from "react";
 import type { Extraction } from "../api";
 
+export function sheetColumnName(column: number): string {
+  return column > 26 ? `${sheetColumnName(Math.floor((column - 1) / 26))}${sheetColumnName((column - 1) % 26 + 1)}` : String.fromCharCode(64 + column);
+}
+
+export function extractionFailure(code: string | null | undefined): UiMessage {
+  const errors: Record<string, string> = { NO_TEXT_FOUND: "未识别到文字", OCR_UNAVAILABLE: "本机 OCR 或识别语言不可用", OCR_TIMEOUT: "本页识别超时", EXTRACTION_TIMEOUT: "文件处理超时", FILE_DECODE_FAILED: "文件无法解析或超过页数/尺寸限制", EXTRACTION_FAILED: "本地提取未完成" };
+  return msg(errors[code ?? ""] ?? "提取失败");
+}
+
 export function SourceReview({ extraction }: { extraction: Extraction }) {
   const [page, setPage] = useState(1);
-  const errors: Record<string, string> = { NO_TEXT_FOUND: t("未识别到文字"), OCR_UNAVAILABLE: t("本机 OCR 或识别语言不可用"), OCR_TIMEOUT: t("本页识别超时"), EXTRACTION_TIMEOUT: t("文件处理超时"), FILE_DECODE_FAILED: t("文件无法解析或超过页数/尺寸限制"), EXTRACTION_FAILED: t("本地提取未完成") };
   return <aside className="source-review work-panel" aria-label={t("原件与识别结果")}><div className="row-between work-panel-heading"><h2>{t("原件对照")}</h2><a href={`/api/v1/sources/${extraction.source_id}/download`}>{t("下载原件")}</a></div>
     <p className="warning">{t("识别可能误读或漏行。请逐页核对，补齐明细后再确认。")}</p>
     {extraction.candidate.warnings?.map(warning => <p key={`${warning.code}-${warning.page}`} role="status" className="warning">{t("第{0} 页有区域未能可靠解析，已保留可识别明细。请对照原件检查是否漏行，补齐或修正后再确认。", [(warning.page) ?? ""])}</p>)}
-    {extraction.status === "failed" && <p role="status" className="warning">{t("{0}。可按原件手工填写，或返回文件列表重试。", [(errors[extraction.error_code ?? ""] ?? t("提取失败")) ?? ""])}</p>}
-    {extraction.pages.length > 0 ? <><label>{t("原件页码")}<select value={page} onChange={e => setPage(Number(e.target.value))}>{extraction.pages.map(p => <option key={p.number} value={p.number}>{t("第{0} 页 / 共{1} 页", [(p.number) ?? "", (extraction.pages.length) ?? ""])}</option>)}</select></label><a href={`/api/v1/extractions/${extraction.extraction_id}/pages/${page}`} target="_blank" rel="noreferrer"><img className="source-page" src={`/api/v1/extractions/${extraction.extraction_id}/pages/${page}`} alt={t("原件第 {0} 页，点击放大", [page])} /></a><details><summary>{t("查看原始识别文字")}</summary><pre>{extraction.pages[page - 1]?.text || t("本页未识别到文字")}</pre></details></> : <p>{t("没有可显示的页面，请下载原件核对。")}</p>}
+    {extraction.status === "failed" && <p role="status" className="warning">{t("{0}。可按原件手工填写，或返回文件列表重试。", [t(extractionFailure(extraction.error_code))])}</p>}
+    {extraction.spreadsheet ? <>
+      <p>{extraction.spreadsheet.sheet_name}</p>
+      <p className="muted">{t("公式只显示原文件缓存，未重新计算；请核对后手工填写对应值。")}</p>
+      <div className="table-wrap purchase-source-grid"><table><thead><tr><th>{t("行")}</th>{Array.from({ length: extraction.spreadsheet.max_column }, (_, index) => <th key={index}>{sheetColumnName(index + 1)}</th>)}</tr></thead><tbody>{extraction.spreadsheet.rows.map(row => <tr key={row.row_number}><th>{row.row_number}</th>{Array.from({ length: extraction.spreadsheet!.max_column }, (_, index) => {
+        const cell = row.cells.find(item => item.column === index + 1);
+        return <td key={index} title={cell ? `${cell.address}: ${cell.raw_value}` : undefined}>{cell?.formula != null ? <><span className="warning-text">{t("公式缓存（未重算）")}</span><div>{cell.text || t("无缓存值")}</div><small>{cell.formula}</small></> : cell?.text}</td>;
+      })}</tr>)}</tbody></table></div>
+    </> : extraction.pages.length > 0 ? <><label>{t("原件页码")}<select value={page} onChange={e => setPage(Number(e.target.value))}>{extraction.pages.map(p => <option key={p.number} value={p.number}>{t("第{0} 页 / 共{1} 页", [(p.number) ?? "", (extraction.pages.length) ?? ""])}</option>)}</select></label><a href={`/api/v1/extractions/${extraction.extraction_id}/pages/${page}`} target="_blank" rel="noreferrer"><img className="source-page" src={`/api/v1/extractions/${extraction.extraction_id}/pages/${page}`} alt={t("原件第 {0} 页，点击放大", [page])} /></a><details><summary>{t("查看原始识别文字")}</summary><pre>{extraction.pages[page - 1]?.text || t("本页未识别到文字")}</pre></details></> : <p>{t("没有可显示的页面，请下载原件核对。")}</p>}
   </aside>;
 }

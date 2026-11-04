@@ -1,9 +1,9 @@
 import { msg, t, type UiMessage } from "../i18n";
 import { useEffect, useRef, useState } from "react";
-import { api, ApiError, message, type Material, type MaterialInput, type MaterialCode, type OrderDetail, type Schemas } from "../api";
+import { api, ApiError, message, type Material, type MaterialCode, type OrderDetail, type Schemas } from "../api";
 
-export function MaterialFields({ value, onChange, disabled, fixed }: {
-  value: MaterialInput; onChange: (value: MaterialInput) => void; disabled: boolean; fixed?: Material;
+export function MaterialFields<T extends Schemas["OrderNewMaterial"]>({ value, onChange, disabled, fixed }: {
+  value: T; onChange: (value: T) => void; disabled: boolean; fixed?: Material;
 }) {
   return <div className="form-grid material-fields">
     <label>{t("我方料号")}<input value={value.own_code ?? ""} onChange={e => onChange({ ...value, own_code: e.target.value })} maxLength={100} disabled={disabled} placeholder={t("留空自动编号")} required={!!fixed} /></label>
@@ -13,8 +13,8 @@ export function MaterialFields({ value, onChange, disabled, fixed }: {
   </div>;
 }
 
-export function MaterialSelect({ onSelect, disabled = false, initialQuery = "", actionLabel = t("选择") }: {
-  onSelect: (material: Material) => void; disabled?: boolean; initialQuery?: string; actionLabel?: string;
+export function MaterialSelect({ onSelect, disabled = false, initialQuery = "", actionLabel = t("选择"), materialKind = "finished" }: {
+  onSelect: (material: Material) => void; disabled?: boolean; initialQuery?: string; actionLabel?: string; materialKind?: "finished" | "raw";
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState(initialQuery);
@@ -26,10 +26,10 @@ export function MaterialSelect({ onSelect, disabled = false, initialQuery = "", 
   const [error, setError] = useState<UiMessage>("");
   useEffect(() => {
     let live = true; setLoading(true); setError("");
-    api.materials(filter, offset).then(result => { if (live) { setItems(result.items); setNext(result.next_offset); } })
+    api.materials(filter, offset, materialKind).then(result => { if (live) { setItems(result.items); setNext(result.next_offset); } })
       .catch(failure => { if (live) { setItems([]); setError(message(failure)); } }).finally(() => { if (live) setLoading(false); });
     return () => { live = false; };
-  }, [filter, offset, refresh]);
+  }, [filter, offset, refresh, materialKind]);
   function search() { setOffset(0); setFilter(query.trim()); setRefresh(value => value + 1); }
   return <section className="material-picker" aria-label={t("查找已有物料")}>
     <div className="material-search"><label>{t("查找物料")}<input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); search(); } }} placeholder={t("我方料号、客户料号、名称或规格")} disabled={disabled} /></label><button type="button" className="secondary" onClick={search} disabled={disabled}>{t("查找")}</button></div>
@@ -39,7 +39,7 @@ export function MaterialSelect({ onSelect, disabled = false, initialQuery = "", 
   </section>;
 }
 
-export function materialFromOrderLine(line: OrderDetail["lines"][number]): MaterialInput {
+export function materialFromOrderLine(line: OrderDetail["lines"][number]): Schemas["OrderNewMaterial"] {
   return { name: line.item_name || line.description, own_code: "", specification: line.specification ?? null, unit: line.source_unit };
 }
 
@@ -47,8 +47,8 @@ export function OrderMaterialLink({ order, line, initialMode = "existing", initi
   order: OrderDetail; line: OrderDetail["lines"][number]; initialMode?: "existing" | "new"; initialError?: UiMessage; initialRemember?: boolean; onClose: () => void; onSaved: () => void;
 }) {
   const [mode, setMode] = useState<"existing" | "new" | "clear">(initialMode);
-  const [selected, setSelected] = useState<Material | null>(line.material ?? null);
-  const [draft, setDraft] = useState<MaterialInput>(() => materialFromOrderLine(line));
+  const [selected, setSelected] = useState<Material | null>(line.material ? { ...line.material, kind: "finished" } : null);
+  const [draft, setDraft] = useState<Schemas["OrderNewMaterial"]>(() => materialFromOrderLine(line));
   const [remember, setRemember] = useState(initialRemember);
   const [code, setCode] = useState(line.item_code ?? "");
   const [mapping, setMapping] = useState<MaterialCode | null>(null);

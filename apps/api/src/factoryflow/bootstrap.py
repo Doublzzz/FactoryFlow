@@ -31,11 +31,12 @@ from factoryflow.modules.documents.adapters.archive_repository import ArchiveDoc
 from factoryflow.modules.documents.adapters.http import router as extraction_router
 from factoryflow.modules.documents.adapters.local_store import LocalEvidenceStore
 from factoryflow.modules.documents.adapters.ocr import LocalExtractor
+from factoryflow.modules.documents.adapters.purchase_spreadsheet import inspect_purchase_spreadsheet
 from factoryflow.modules.documents.adapters.repository import RevisionRepository
 from factoryflow.modules.documents.adapters.source_repository import SourceRepository
 from factoryflow.modules.documents.application.extraction import ExtractionService, ExtractionWork
 from factoryflow.modules.documents.application.service import Documents
-from factoryflow.modules.documents.public import ArchiveDocuments
+from factoryflow.modules.documents.public import ArchiveDocuments, PurchaseEvidence
 from factoryflow.modules.fulfillment.adapters.archive_renderer import render_archive_delivery
 from factoryflow.modules.fulfillment.adapters.http import router as delivery_router
 from factoryflow.modules.fulfillment.adapters.layout_http import router as delivery_layout_router
@@ -48,9 +49,15 @@ from factoryflow.modules.identity.adapters.http import router as identity_router
 from factoryflow.modules.identity.adapters.repository import IdentityRepository
 from factoryflow.modules.identity.application.service import IdentityService, IdentityWork
 from factoryflow.modules.inventory.adapters.http import router as inventory_router
+from factoryflow.modules.inventory.adapters.raw_http import router as raw_inventory_router
 from factoryflow.modules.inventory.adapters.repository import InventoryRepository
+from factoryflow.modules.inventory.application.raw import RawInventoryService
 from factoryflow.modules.inventory.application.service import InventoryService, InventoryWork
-from factoryflow.modules.inventory.public import InventoryDeliveryEffects
+from factoryflow.modules.inventory.public import (
+    InventoryDeliveryEffects,
+    InventoryProductionEffects,
+    InventoryReceivingEffects,
+)
 from factoryflow.modules.materials.adapters.http import router as material_router
 from factoryflow.modules.materials.adapters.import_file import read_import_file
 from factoryflow.modules.materials.adapters.repository import MaterialRepository
@@ -65,8 +72,15 @@ from factoryflow.modules.orders.application.service import OrderService, OrderWo
 from factoryflow.modules.orders.public import (
     ArchiveOrders,
     FulfillmentOrders,
+    ProductionOrders,
     SettlementOrderSources,
 )
+from factoryflow.modules.production.adapters.http import router as production_router
+from factoryflow.modules.production.adapters.repository import ProductionRepository
+from factoryflow.modules.production.application.service import ProductionService, ProductionWork
+from factoryflow.modules.purchasing.adapters.http import router as purchasing_router
+from factoryflow.modules.purchasing.adapters.repository import PurchasingRepository
+from factoryflow.modules.purchasing.public import PurchasingService, PurchasingWork
 from factoryflow.modules.statements.adapters.archive_repository import ArchiveStatementRepository
 from factoryflow.modules.statements.adapters.customer_excel import (
     inspect_template,
@@ -114,6 +128,9 @@ class Services:
     statement_templates: StatementTemplates
     materials: MaterialService
     inventory: InventoryService
+    raw_inventory: RawInventoryService
+    purchasing: PurchasingService
+    production: ProductionService
 
     def close(self):
         self.engine.dispose()
@@ -154,6 +171,9 @@ def build_services(settings: Settings, *, delivery_script: Path | None = None) -
                 "users_username_key": "USERNAME_EXISTS",
                 "statement_period_unique": "STATEMENT_PERIOD_EXISTS",
                 "materials_code_unique": "MATERIAL_CODE_EXISTS",
+                "purchase_orders_organization_id_number_key": "PURCHASE_NUMBER_EXISTS",
+                "purchase_receipts_organization_id_number_key": "PURCHASE_NUMBER_EXISTS",
+                "purchase_order_source_unique": "SOURCE_ALREADY_IMPORTED",
             }.get(constraint, "INTEGRITY_CONFLICT")
             raise BusinessError(code, 409) from None
 
@@ -220,6 +240,52 @@ def build_services(settings: Settings, *, delivery_script: Path | None = None) -
         with transaction() as conn:
             conn.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
             yield inventory_for(conn)
+
+    def purchasing_for(conn):
+        catalog = MaterialCatalog(
+            MaterialRepository(conn), CustomerAccess(CustomerRepository(conn))
+        )
+        return PurchasingWork(
+            PurchasingRepository(conn),
+            catalog,
+            InventoryReceivingEffects(InventoryRepository(conn), catalog),
+            Journal(conn),
+            PurchaseEvidence(SourceRepository(conn), store),
+        )
+
+    @contextmanager
+    def purchasing_work():
+        with transaction() as conn:
+            yield purchasing_for(conn)
+
+    @contextmanager
+    def purchasing_read_work():
+        with transaction() as conn:
+            conn.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
+            yield purchasing_for(conn)
+
+    def production_for(conn):
+        catalog = MaterialCatalog(
+            MaterialRepository(conn), CustomerAccess(CustomerRepository(conn))
+        )
+        return ProductionWork(
+            ProductionRepository(conn),
+            ProductionOrders(OrderRepository(conn)),
+            catalog,
+            InventoryProductionEffects(InventoryRepository(conn), catalog),
+            Journal(conn),
+        )
+
+    @contextmanager
+    def production_work():
+        with transaction() as conn:
+            yield production_for(conn)
+
+    @contextmanager
+    def production_read_work():
+        with transaction() as conn:
+            conn.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
+            yield production_for(conn)
 
     def statements_for(conn):
         return StatementWork(
@@ -314,6 +380,7 @@ def build_services(settings: Settings, *, delivery_script: Path | None = None) -
             extraction_work,
             store,
             LocalExtractor(engine=settings.ocr_engine, python=settings.ocr_python),
+            inspect_purchase_spreadsheet,
         ),
         StatementService(statement_work, statement_read_work),
         StatementExports(statement_work, statement_read_work, store, render_excel),
@@ -337,6 +404,9 @@ def build_services(settings: Settings, *, delivery_script: Path | None = None) -
         ),
         MaterialService(material_work, read_import_file),
         InventoryService(inventory_work, inventory_read_work),
+        RawInventoryService(inventory_work, inventory_read_work),
+        PurchasingService(purchasing_work, purchasing_read_work),
+        ProductionService(production_work, production_read_work),
     )
 
 
@@ -392,8 +462,45 @@ def create_app(web_directory: Path | None = None, settings: Settings | None = No
 
     def safe_error(request, code, status, field=None):
         messages = {
-            "INVENTORY_ALREADY_OPEN": "这个成品已经开始记录库存，请重新读取当前余额。",
-            "INVENTORY_NOT_MANAGED": "这个成品还未开账，请先按当前实物数量开始记录。",
+            "PRODUCTION_UNIT_MISMATCH": (
+                "生产单位与成品基本单位不一致或尚未核实，请先核对订单及物料。"
+            ),
+            "PRODUCTION_NOT_FOUND": "未找到这张生产单，请重新查询。",
+            "PRODUCTION_SOURCE_CHANGED": "订单已修订、删除或改绑物料，请核对来源后重新安排生产。",
+            "PRODUCTION_MATERIAL_REQUIRED": "请先在订单明细关联成品，再安排生产。",
+            "PRODUCTION_CLOSED": "生产单已关闭，不能新增领料或完工。",
+            "PRODUCTION_POSITIVE_QUANTITY_REQUIRED": "生产计划和领退料数量必须大于零。",
+            "PRODUCTION_EMPTY_COMPLETION": "合格数量与报废数量不能同时为零。",
+            "PRODUCTION_EXCEEDS_PLAN": "本次合格数量超过剩余生产计划，请核对已完工数量。",
+            "PRODUCTION_COMPLETION_NOT_FOUND": "未找到这笔完工记录，请重新读取。",
+            "PRODUCTION_COMPLETION_VOID": "这笔完工已作废，请重新读取。",
+            "PRODUCTION_RECEIPT_IN_USE": "当前成品库存不足以冲回这笔完工，请先核对出入库。",
+            "PRODUCTION_ISSUE_MISMATCH": "原领料记录不属于这张生产单，请重新选择。",
+            "PRODUCTION_INVENTORY_MISMATCH": "完工与库存记录不一致，本次操作未保存。",
+            "MATERIAL_KIND_MISMATCH": "物料类别不符，请从对应的成品或原料入口选择。",
+            "SUPPLIER_NOT_FOUND": "未找到这家供应商，请重新查询。",
+            "SUPPLIER_INACTIVE": "供应商已停用，不能登记新的采购或收料。",
+            "PURCHASE_ORDER_NOT_FOUND": "未找到这张采购单，请重新查询。",
+            "PURCHASE_RECEIPT_NOT_FOUND": "未找到这张收料单，请重新查询。",
+            "PURCHASE_ORDER_CLOSED": "采购单已关闭，不能继续收料。",
+            "PURCHASE_ORDER_UNAVAILABLE": "采购单已关闭或供应商不一致，请核对采购单。",
+            "PURCHASE_LINE_NOT_FOUND": "采购明细不属于这张采购单，请重新选择。",
+            "PURCHASE_LINE_DUPLICATE": "同一采购明细只能填写一次，请合并本次收料数量。",
+            "PURCHASE_LINE_MATERIAL_MISMATCH": "收料原料与采购明细不一致，请重新选择。",
+            "PURCHASE_OVER_RECEIPT": "本次收料超过采购未收数量，请核对后重新登记。",
+            "PURCHASE_RECEIPT_NOT_ACTIVE": "这张收料单已作废，请重新读取。",
+            "PURCHASE_RECEIPT_INSUFFICIENT_BALANCE": (
+                "当前原料库存不足以冲回整张收料单，请先核对实际出入库。"
+            ),
+            "PURCHASE_INVENTORY_MISMATCH": "收料与库存记录不一致，本次操作未保存。",
+            "PURCHASE_QUANTITY_INVALID": "采购或收料数量必须大于零，并使用已核实的基本单位。",
+            "RAW_INVENTORY_INSUFFICIENT": "原料库存不足，领用数量不能超过当前余额。",
+            "RAW_RETURN_REQUIRES_ISSUE": "退料必须关联原领用记录，请重新选择。",
+            "RAW_RETURN_EXCEEDS_ISSUED": "累计退料不能超过这次领用的数量，请核对已退数量。",
+            "RAW_RECEIPT_REQUIRES_SUPPLIER": "原料入库请从采购与收料登记供应商收料。",
+            "PURCHASE_NUMBER_EXISTS": "这个单号已存在，请查看已有单据或换一个号码。",
+            "INVENTORY_ALREADY_OPEN": "这个物料已经开始记录库存，请重新读取当前余额。",
+            "INVENTORY_NOT_MANAGED": "这个物料还未开账，请先按当前实物数量开始记录。",
             "INVENTORY_UNIT_REQUIRED": "请先在物料池核实基本单位，再开始记录库存。",
             "INVENTORY_UNIT_MISMATCH": (
                 "订单单位与库存单位不同或尚未核实；请核对，或明确选择本次只记送货。"
@@ -548,6 +655,9 @@ def create_app(web_directory: Path | None = None, settings: Settings | None = No
     application.include_router(customer_router, prefix="/api/v1")
     application.include_router(material_router, prefix="/api/v1")
     application.include_router(inventory_router, prefix="/api/v1")
+    application.include_router(raw_inventory_router, prefix="/api/v1")
+    application.include_router(purchasing_router, prefix="/api/v1")
+    application.include_router(production_router, prefix="/api/v1")
     application.include_router(order_router, prefix="/api/v1")
     application.include_router(delivery_router, prefix="/api/v1")
     application.include_router(delivery_layout_router, prefix="/api/v1")

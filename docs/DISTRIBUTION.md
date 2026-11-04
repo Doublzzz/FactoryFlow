@@ -2,6 +2,12 @@
 
 The source snapshot and Windows offline package use the same application source. The source contains no runtime accounts, databases, installed toolchains or old Git history. The prepared release is a developer preview; clean-machine Windows and factory acceptance remain separate.
 
+The preview.3 source is integrated on the existing public history, without importing private development history, runtime records or machine paths. It preserves the public login-only UI and MIT metadata. The public Windows package reuses the verified delivered runtime and migrations, synchronizes four formatting-only backend differences to the public source after Python AST-equivalence checks, replaces the frontend with a build of this public source, and records its own build ID. The delivered `b4e2d4b6ea86c4b2` remains a separate artifact; previous local acceptance is not automatically acceptance of this repackaged ZIP.
+
+PostgreSQL executables contain a process UTF-8 manifest prepared by `scripts/prepare-postgres-utf8.py`. The recorded executable code sections and other resources remain unchanged; this does not modify Windows global language settings. Windows 10 1903+ / Windows 11 x64 is required.
+
+Public command files are regenerated from the existing public builder: the default data home is `%LOCALAPPDATA%\FactoryFlow\data`, and the English start command passes `--language en`. First setup uses terminal prompts; the optional Chinese web-setup helper is not the default public entry. Delivered machine-specific data paths are not shipped.
+
 ## Runtime inputs
 
 - Windows CPython 3.14.7 and the locked project Python packages.

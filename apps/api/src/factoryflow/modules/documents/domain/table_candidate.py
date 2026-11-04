@@ -238,6 +238,61 @@ def _cell_text(words):
     return " ".join(_text(row) for row in _rows({"lines": [{"words": words}]}))
 
 
+def _physical_cell_text(words, kind, bounds):
+    """Project observed line breaks inside one complete physical cell only."""
+    rows = _rows({"lines": [{"words": words}]})
+    if kind == "specification":
+        return "\n".join(_text([_observed_specification_word(w) for w in row]) for row in rows)
+    if not rows:
+        return ""
+    left, right = bounds
+    result = _text(rows[0])
+    for previous, current in zip(rows, rows[1:], strict=False):
+        before, after = _text(previous), _text(current)
+        height = max(w["height"] for row in (previous, current) for w in row)
+        previous_left = min(w["x"] for w in previous)
+        previous_right = max(w["x"] + w["width"] for w in previous)
+        wrapped = (
+            all(
+                left - 2 <= w["x"] and w["x"] + w["width"] <= right + 2
+                for row in (previous, current)
+                for w in row
+            )
+            and previous_right - previous_left >= (right - left) * 0.75
+            and previous_left - left <= height * 1.25
+            and right - previous_right <= height * 1.25
+            and min(w["x"] for w in current) - left <= height * 1.25
+            and 0 < min(w["y"] for w in current) - min(w["y"] for w in previous) <= height * 2.5
+        )
+        join = wrapped and (
+            kind == "item_code"
+            and all(re.fullmatch(r"[A-Za-z0-9_./-]+", text) for text in (before, after))
+            or kind == "description"
+            and re.search(r"[\u4e00-\u9fff]$", before)
+            and re.match(r"[\u4e00-\u9fff]", after)
+        )
+        result += ("" if join else " ") + after
+    return result
+
+
+def _observed_specification_word(word):
+    """Apply only image-observed slash gaps to a candidate copy, not OCR text."""
+    text = word["text"]
+    offsets = word.get("observed_space_offsets", [])
+    if not isinstance(offsets, list) or any(
+        type(offset) is not int
+        or not 0 < offset < len(text)
+        or "/" not in text[offset - 1 : offset + 1]
+        or text[offset - 1].isspace()
+        or text[offset].isspace()
+        for offset in offsets
+    ):
+        return word
+    for offset in sorted(set(offsets), reverse=True):
+        text = text[:offset] + " " + text[offset:]
+    return {**word, "text": text}
+
+
 def exact_header_kind(words):
     """Classify only an observed finite header label; do not correct characters."""
     kind = _KINDS.get(_compact(_cell_text(words)))
@@ -759,16 +814,16 @@ def _regional_fields(xs, kinds, words, physical=True):
     return fields, uncertain
 
 
-def _proposal(record, kinds):
-    description = " ".join(
-        filter(
-            None,
-            (
-                _cell_text(record.get(kind, []))
-                for kind in ("item_code", "description", "specification")
-            ),
+def _proposal(record, kinds, cell_bounds=None):
+    identity = {
+        kind: (
+            _physical_cell_text(record.get(kind, []), kind, cell_bounds[kind])
+            if cell_bounds and kind in cell_bounds
+            else _cell_text(record.get(kind, []))
         )
-    )
+        for kind in ("item_code", "description", "specification")
+    }
+    description = " ".join(filter(None, identity.values()))
     quantity, unit = _cell_text(record.get("quantity", [])), _cell_text(record.get("unit", []))
     if not description or len(unit) > 40:
         return None
@@ -783,9 +838,9 @@ def _proposal(record, kinds):
         kinds.count(kind) <= 1 for kind in ("item_code", "description", "specification")
     ):
         separated = {
-            "item_code": _cell_text(record.get("item_code", [])) or None,
-            "item_name": _cell_text(record.get("description", [])),
-            "specification": _cell_text(record.get("specification", [])) or None,
+            "item_code": identity["item_code"] or None,
+            "item_name": identity["description"],
+            "specification": identity["specification"] or None,
         }
         # Preserve original strings; do not truncate the separated source fields.
         if all(
@@ -878,7 +933,7 @@ def _unruled_body_fields(xs, kinds, body):
     return resolved, borrowed
 
 
-def table_result(page):
+def table_result(page, *, line_limit=200):
     """Local evidence: resolved lines, consumed regions and unresolved regions.
 
     None means no table clues. A claimed region records ownership, not accuracy;
@@ -898,8 +953,8 @@ def table_result(page):
         if warning:
             unresolved.append(region)
 
-    def emit(record, region_words, kinds):
-        line = _proposal(record, kinds)
+    def emit(record, region_words, kinds, cell_bounds=None):
+        line = _proposal(record, kinds, cell_bounds)
         if line is not None:
             entries.append(
                 (min(w["y"] for w in region_words), min(w["x"] for w in region_words), line)
@@ -980,7 +1035,17 @@ def table_result(page):
                 if not record.get("quantity"):
                     unresolved.append(_bounds(band))
                 if complete[index] or record.get("quantity"):
-                    emit(record, band, kinds)
+                    emit(
+                        record,
+                        band,
+                        kinds,
+                        {
+                            kind: (left, right)
+                            for left, right, kind in zip(xs, xs[1:], kinds, strict=False)
+                        }
+                        if complete[index] and not cross_row
+                        else None,
+                    )
 
     # Discover each unhandled header independently, even after totals or prose.
     remaining_rows = [[w for w in row if id(w) not in handled] for row in rows]
@@ -1118,7 +1183,7 @@ def table_result(page):
         unresolved.append(_bounds(words))
     entries.sort(key=lambda entry: (entry[0], entry[1]))
     return {
-        "lines": [line for _, _, line in entries][:200],
+        "lines": [line for _, _, line in entries][:line_limit],
         "claimed_regions": claimed,
         "unresolved_regions": unresolved,
     }

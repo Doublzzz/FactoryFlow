@@ -30,6 +30,12 @@ def upgrade_database(engine, repository_root: Path, runtime_role: str = "ff_runt
         conn.execute(text("GRANT UPDATE(material_id) ON order_lines TO ff_runtime"))
         conn.execute(text("GRANT INSERT ON materials,customer_material_codes TO ff_runtime"))
         conn.execute(
+            text("GRANT INSERT,UPDATE ON suppliers,purchase_orders,purchase_receipts TO ff_runtime")
+        )
+        conn.execute(
+            text("GRANT INSERT ON purchase_order_lines,purchase_receipt_lines TO ff_runtime")
+        )
+        conn.execute(
             text(
                 "GRANT INSERT ON inventory_accounts,inventory_ledger,delivery_inventory_snapshots "
                 "TO ff_runtime"
@@ -82,3 +88,6 @@ def upgrade_database(engine, repository_root: Path, runtime_role: str = "ff_runt
             )
         )
         conn.execute(text("GRANT UPDATE(id) ON customers TO ff_runtime"))
+        conn.execute(
+            text("GRANT INSERT,UPDATE ON production_orders,production_completions TO ff_runtime")
+        )

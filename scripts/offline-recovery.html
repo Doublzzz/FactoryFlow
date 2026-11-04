@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>交有数 · 重设登录密码</title>
+<style>
+:root{font-family:"Microsoft YaHei","Segoe UI",sans-serif;color:#202a3c;background:#f4f6f8}*{box-sizing:border-box}body{margin:0}main{width:min(440px,100% - 32px);margin:9vh auto}header{font-size:20px;font-weight:700;margin-bottom:28px}h1{font-size:25px;margin:0 0 12px}p{color:#5c6778;line-height:1.7;font-size:14px}form{margin-top:28px}label.field{display:block;font-size:14px;font-weight:600;margin-top:20px}input:not([type=checkbox]){display:block;width:100%;min-height:44px;padding:10px 66px 10px 12px;border:1px solid #b9c4d0;border-radius:5px;background:white;color:#202a3c;font:inherit;margin-top:8px}input[readonly]{background:#e9edf1;padding-right:12px}.password{position:relative}.toggle{position:absolute;right:6px;top:5px;border:0;background:transparent;color:#2859b2;padding:8px;font:inherit;font-size:13px;cursor:pointer}.primary{display:block;width:100%;padding:13px 16px;margin-top:24px;background:#2859b2;color:white;border:0;border-radius:5px;font:inherit;font-weight:600;text-align:center;text-decoration:none;cursor:pointer}.primary:disabled{opacity:.55;cursor:wait}.consent{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.7;margin-top:22px}.consent input{width:17px;height:17px;margin:3px 0;flex-shrink:0}.error{color:#a32626;font-size:13px;margin-top:6px}.error:empty{display:none}input[aria-invalid=true]{border-color:#a32626}:focus-visible{outline:3px solid #2859b250;outline-offset:3px}fieldset{border:0;margin:0;padding:0;min-width:0}.hint{font-size:12px;margin:7px 0}.location{font-size:12px;overflow-wrap:anywhere;margin-top:28px}[hidden]{display:none!important}
+</style></head><body><main>
+<header id="brand">交有数</header><h1 id="heading">重设登录密码</h1>
+<p id="intro">账号和业务数据会保留。重设后，原有登录会话将退出。</p>
+<form id="form"><fieldset id="fields" disabled>
+<label class="field"><span id="username-label">账号</span><input id="username" autocomplete="username" readonly></label>
+<label class="field" for="password" id="password-label">新密码</label><div class="password"><input id="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required aria-describedby="password-hint password-error"><button class="toggle" type="button" data-target="password" aria-pressed="false">显示</button></div>
+<p class="hint" id="password-hint">12 至 128 个字符，请记好新密码。</p><div class="error" id="password-error"></div>
+<label class="field" for="confirmation" id="confirmation-label">再输入一次</label><div class="password"><input id="confirmation" type="password" autocomplete="new-password" maxlength="128" required aria-describedby="confirmation-error"><button class="toggle" type="button" data-target="confirmation" aria-pressed="false">显示</button></div><div class="error" id="confirmation-error"></div>
+<label class="consent"><input id="confirmed" type="checkbox" required aria-describedby="confirmed-error"><span id="confirmed-label">我有权管理这台电脑上的工厂账号，确认重设密码。</span></label><div class="error" id="confirmed-error"></div>
+<button class="primary" id="submit">重设密码</button></fieldset></form>
+<p id="status" role="status" aria-live="polite"></p><a id="enter" class="primary" hidden>返回登录</a><p class="location" id="location"></p>
+</main><script nonce="__CSP_NONCE__">
+const $ = id => document.getElementById(id);
+const token = location.hash.slice(1); history.replaceState(null, '', location.pathname);
+let english = false, busy = false;
+const tr = (zh, en) => english ? en : zh;
+async function call(path, body) {
+ const response = await fetch(path, {method:body ? 'POST' : 'GET', headers:{'X-FactoryFlow-Setup':token, ...(body ? {'Content-Type':'application/json'} : {})}, ...(body ? {body:JSON.stringify(body)} : {}), cache:'no-store'});
+ const value = await response.json(); if (!response.ok) throw new Error(tr('页面已失效，请重新打开重设密码入口。', 'Reopen Reset Login Password.'));
+ return value;
+}
+function show(value) {
+ $('fields').disabled = value.phase !== 'form';
+ ['password','confirmation','confirmed'].forEach(key => {const message = value.errors?.[key] || ''; $(key+'-error').textContent = message; $(key).setAttribute('aria-invalid', String(!!message));});
+ $('status').textContent = value.message || value.errors?.form || '';
+ if (value.phase !== 'form') { $('password').value = ''; $('confirmation').value = ''; }
+ if (value.phase === 'ready') {
+  $('form').hidden = true; $('intro').hidden = true; $('heading').textContent = tr('密码已重设', 'Password reset');
+  $('enter').href = value.url + (english ? '?lang=en' : ''); $('enter').hidden = false; $('enter').focus();
+ } else if (value.errors) {const key = ['password','confirmation','confirmed'].find(key => value.errors[key]); if (key) $(key).focus();}
+}
+function initialize(value) {
+ english = value.language === 'en';
+ if (english) {
+  document.documentElement.lang = 'en'; document.title = 'FactoryFlow · Reset Login Password';
+  const labels = {'brand':'FactoryFlow','heading':'Reset login password','intro':'Your account and business data are retained. Existing sign-in sessions will end.','username-label':'Account','password-label':'New password','password-hint':'Use 12 to 128 characters. Keep your new password safe.','confirmation-label':'Confirm password','confirmed-label':'I manage this factory account and confirm the password reset.','submit':'Reset password','enter':'Back to sign in'};
+  Object.entries(labels).forEach(([key, text]) => $(key).textContent = text);
+ }
+ $('username').value = value.username; $('location').textContent = tr('数据位置：', 'Data location: ') + value.data_directory;
+ document.querySelectorAll('.toggle').forEach(button => {button.textContent = tr('显示','Show');button.setAttribute('aria-label',tr('显示','Show ') + $(button.dataset.target+'-label').textContent);});
+ show(value);
+}
+$('form').addEventListener('submit', async event => {
+ event.preventDefault(); if (busy) return;
+ busy = true; $('fields').disabled = true; $('status').textContent = tr('正在备份数据并重设密码…','Backing up data and resetting the password…');
+ const body = {password:$('password').value, confirmation:$('confirmation').value, confirmed:$('confirmed').checked};
+ try {show(await call('/start', body));}
+ catch {
+  try {show(await call('/state'));}
+  catch {$('status').textContent = tr('连接已中断，请先尝试用新密码登录。不要删除数据或重新安装。','Connection lost. Try signing in with the new password. Retain your data.');}
+ } finally {busy = false; body.password = ''; body.confirmation = '';}
+});
+document.querySelectorAll('.toggle').forEach(button => button.addEventListener('click', () => {
+ const input = $(button.dataset.target), visible = input.type === 'password'; input.type = visible ? 'text' : 'password';
+ button.textContent = visible ? tr('隐藏','Hide') : tr('显示','Show'); button.setAttribute('aria-pressed',String(visible));
+ button.setAttribute('aria-label',button.textContent + ' ' + $(input.id+'-label').textContent);
+}));
+call('/state').then(initialize).catch(error => {$('status').textContent = error.message;});
+</script></body></html>

@@ -1,13 +1,13 @@
 FactoryFlow for Windows — Installation and daily use
 
-Requirements: Windows 10 or 11, x64, with Chrome or current Microsoft Edge.
+Requirements: Windows 10 1903+ or Windows 11, x64, with Chrome or current Microsoft Edge.
 The target computer does not need an internet connection, Python, Node.js, or a separate database installation.
 This package runs on one computer. It does not provide access from other computers on the network.
 
 First use
 1. Copy the entire ZIP to the computer and choose Extract All. Do not run files from inside the ZIP.
 2. Open Install.cmd. Read the bundled Microsoft component terms and enter Y if you accept them. Verification and copying may take a few minutes. The installer creates a FactoryFlow desktop entry.
-3. Open FactoryFlow on the desktop. Enter your factory name, username, and password. The password must have at least 12 characters; password input is hidden.
+3. Open FactoryFlow on the desktop. Enter your factory name, username, and password. Follow the terminal prompts. The password must have at least 12 characters; typing is hidden.
 4. Sign in with that account. Create a customer while entering an order, or use the Customers page. Material lists can be imported separately.
 5. Choose CNY or USD explicitly for each order and review the quantities and prices before confirming. The default remains CNY, regardless of interface language. A confirmed order's currency cannot be changed.
 6. Record a partial or full delivery, print a delivery note, and prepare a statement for the matching currency. CNY and USD use separate statements even for the same customer and period.
@@ -25,7 +25,7 @@ The package contains no customer templates or developer business data.
 Optional finished-goods inventory
 Start an item's stock record from a physical count. An unopened item has no recorded balance; it is not zero stock. Previous deliveries are not deducted retroactively.
 Record later receipts and counts. For each delivery, choose to deduct stock or explicitly skip stock handling for later review. A shortage requires confirmation before the book balance may go negative. Voiding a delivery reverses the original stock movements.
-Orders and statements remain usable without inventory. Raw materials, purchasing, production/BOM, multiple warehouses and costing are outside this preview.
+Orders and statements remain usable without inventory. BOM, automatic scheduling, multiple warehouses and costing are outside this preview.
 
 Daily use
 Open the desktop entry. Saved records remain available after restarting. Save your work before closing the browser; unsaved edits are not a backup.
@@ -53,3 +53,8 @@ The program's third-party directory contains component licenses and provenance. 
 Python: https://docs.python.org/3.14/using/windows.html
 PostgreSQL: https://www.postgresql.org/docs/18/installation-platform-notes.html
 Microsoft runtime: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
+
+New in preview.3
+Purchasing supports reviewed image/PDF and Excel input, optional prices and printing. Saving a purchase does not receive stock. Raw-material receipts, issues and returns remain separate from finished goods. Production records link order lines to material use and completion into finished stock; no automatic BOM or scheduling.
+If the administrator password is forgotten, open Reset Login Password.cmd on the installed computer. The local recovery flow verifies ownership and backs up before changing the password; accounts and business records remain, while old sessions are invalidated. This is not an online password-reset service.
+Programs, data and temporary directories may contain Chinese characters or spaces without changing Windows regional settings. Windows 10 before 1903 is unsupported.

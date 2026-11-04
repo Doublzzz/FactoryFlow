@@ -18,12 +18,19 @@ def text_value(value, field, maximum, *, required=False):
 
 
 def prepare_material(payload):
-    return {
+    kind = payload.get("kind", "finished")
+    if kind not in {"finished", "raw"}:
+        raise BusinessError("INVALID_INPUT", field="kind")
+    data = {
         "own_code": text_value(payload.get("own_code"), "own_code", 100),
         "name": text_value(payload.get("name"), "name", 500, required=True),
         "specification": text_value(payload.get("specification"), "specification", 1000),
         "unit": text_value(payload.get("unit"), "unit", 40),
     }
+    # Keep the fingerprint of every pre-classification finished-material command.
+    if kind == "raw":
+        data["kind"] = kind
+    return data
 
 
 def signature(line):

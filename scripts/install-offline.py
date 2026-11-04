@@ -106,6 +106,8 @@ def install(source, destination):
         "Back Up Data",
         "Restore Backup",
         "Check Status",
+        "重设登录密码",
+        "Reset Login Password",
     ):
         if not (program / (name + ".cmd")).is_file():
             continue

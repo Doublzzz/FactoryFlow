@@ -52,7 +52,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Account setup failed' }
 .\.venv\Scripts\python.exe scripts/serve-local.py --config .runtime/development/app.json
 ```
 
-Setup prompts for a new local password without echoing it. Do not paste credentials into issues or commit generated configuration. A prepare command refuses to replace an existing environment. Current schema head is `0015_order_currencies`; startup does not migrate.
+Setup prompts for a new local password without echoing it. Do not paste credentials into issues or commit generated configuration. A prepare command refuses to replace an existing environment. Current schema head is `0018_purchase_documents`; startup does not migrate.
 
 Open `http://127.0.0.1:8100/` and sign in with `synthetic-admin` and the password you just chose. The helper binds PostgreSQL and the API to loopback. `/api/v1/health/live` checks the process; `/api/v1/health/ready` checks configured schema/object readiness.
 

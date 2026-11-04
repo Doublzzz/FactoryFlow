@@ -48,6 +48,7 @@ def package_inputs(tmp_path, monkeypatch):
     notices = tmp_path / "reviewed-notices"
     for base in (primary, ocr):
         write(base / "python.exe", "synthetic executable")
+        write(base / "pythonw.exe", "synthetic windowless executable")
         write(base / "Lib/os.py", "# synthetic standard library\n")
     distribution(primary / "Lib/site-packages", "tiny-runtime", "1.0")
     for name, version in (("rapidocr", "3.9.2"), ("onnxruntime", "1.30.0"), ("pillow", "12.1.1")):
@@ -67,10 +68,21 @@ def package_inputs(tmp_path, monkeypatch):
     write(source / "migrations/env.py", "# synthetic migration source\n")
     write(source / "alembic.ini", "[alembic]\n")
     write(source / "scripts/factory-local.py", "# synthetic entry point\n")
+    write(source / "scripts/launch-offline.py", "# synthetic browser setup\n")
+    write(source / "scripts/offline-setup.html", "<title>Synthetic setup</title>")
+    write(source / "scripts/recover-offline.py", "# synthetic recovery entry point\n")
+    write(source / "scripts/offline-recovery.html", "<title>Synthetic recovery</title>")
     shutil.copyfile(ROOT / "scripts/install-offline.py", source / "scripts/install-offline.py")
     write(source / "docs/FACTORY-OFFLINE-GUIDE.txt", "Synthetic guide")
     write(source / "docs/FACTORY-OFFLINE-GUIDE-en.txt", "Synthetic English guide")
     monkeypatch.setattr(builder, "ROOT", source)
+
+    # Resource editing is covered by the explicit real-PE test; this fixture tests packaging only.
+    def prepare_postgres(original, destination):
+        shutil.copytree(original, destination)
+        write(destination / "path-encoding.json", '{"synthetic_resource_boundary": true}')
+
+    monkeypatch.setattr(builder, "prepare_postgres", prepare_postgres)
     monkeypatch.setattr(
         builder, "sys", SimpleNamespace(base_prefix=primary, prefix=primary, version="3.14.7")
     )
@@ -104,8 +116,16 @@ def test_notices_are_hashed_archived_and_installed(package_inputs, tmp_path):
     app = inputs.output / "app"
     installer = load_script("offline_notice_installer", "install-offline.py")
     manifest = installer.verify(app)
+    assert manifest["postgresql_path_encoding"] == "utf-8"
+    assert "runtime/postgresql/path-encoding.json" in manifest["files"]
+    assert (app / "third-party/postgresql/PROCESS-ENCODING.json").read_bytes() == (
+        app / "runtime/postgresql/path-encoding.json"
+    ).read_bytes()
     expected = {
         "LICENSE": inputs.source / "LICENSE",
+        "scripts/launch-offline.py": inputs.source / "scripts/launch-offline.py",
+        "scripts/offline-setup.html": inputs.source / "scripts/offline-setup.html",
+        "scripts/install-offline.py": inputs.source / "scripts/install-offline.py",
         "third-party/README.md": inputs.notices / "README.md",
         "third-party/inventory.json": inputs.notices / "inventory.json",
         "third-party/component/LICENSE.txt": inputs.notices / "component/LICENSE.txt",

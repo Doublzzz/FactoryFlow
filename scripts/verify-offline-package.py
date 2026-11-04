@@ -158,7 +158,6 @@ def main():
                 "revision_id": order["revision_id"],
                 "expected_version": order["version"],
                 "delivery_date": "2026-10-02",
-                "inventory_mode": "skip",
                 "lines": [{"order_line_id": order["lines"][0]["id"], "quantity": "5"}],
             },
         )
@@ -168,7 +167,6 @@ def main():
             {
                 "customer_id": customer["id"],
                 "period_start": "2026-10-01",
-                "currency": "CNY",
                 "period_end": "2026-10-31",
                 "tax_mode": "untaxed_final",
                 "tax_rate": "0",

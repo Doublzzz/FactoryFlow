@@ -12,6 +12,7 @@ CommandKey = Annotated[UUID, Header(alias="Idempotency-Key")]
 
 
 class MaterialInput(StrictDTO):
+    kind: Literal["finished", "raw"] = "finished"
     own_code: str | None = Field(default=None, max_length=100)
     name: str = Field(min_length=1, max_length=500)
     specification: str | None = Field(default=None, max_length=1000)
@@ -220,8 +221,9 @@ def list_materials(
     q: Annotated[str, Query(max_length=500)] = "",
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    kind: Literal["finished", "raw"] = "finished",
 ):
-    return services(request).materials.list(actor, q, offset, limit)
+    return services(request).materials.list(actor, q, offset, limit, kind)
 
 
 @router.post("/materials", operation_id="createMaterial", response_model=MaterialResponse)

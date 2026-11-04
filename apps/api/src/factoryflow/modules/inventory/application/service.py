@@ -22,16 +22,19 @@ class InventoryWork:
 
 
 class InventoryService:
-    def __init__(self, transaction, read_transaction=None):
+    def __init__(self, transaction, read_transaction=None, *, material_kind="finished"):
         self.transaction = transaction
         self.read_transaction = read_transaction or transaction
+        self.material_kind = material_kind
 
     def record(self, actor, key, material_id, kind, payload):
         actor.require_write()
         request = prepare(payload, count=kind == "count")
         if kind not in {"opening", "receipt", "count"}:
             raise BusinessError("INVALID_INPUT")
-        command = f"inventory.{kind}"
+        if self.material_kind == "raw" and kind == "receipt":
+            raise BusinessError("RAW_RECEIPT_REQUIRES_SUPPLIER", 409)
+        command = f"{'raw_inventory' if self.material_kind == 'raw' else 'inventory'}.{kind}"
         with self.transaction() as work:
             prior = work.journal.claim(
                 actor, command, key, {"material_id": str(material_id), **request}
@@ -39,7 +42,9 @@ class InventoryService:
             if prior is not None:
                 return prior
             work.catalog.lock(actor)
-            material = work.catalog.require(actor, material_id, active=kind == "opening")
+            material = work.catalog.require(
+                actor, material_id, active=kind == "opening", kind=self.material_kind
+            )
             account = work.inventory.account(actor, material_id, lock=True)
             if kind == "opening":
                 if account is not None:
@@ -85,6 +90,7 @@ class InventoryService:
                 return prior
             work.catalog.lock(actor)
             original = work.inventory.entry(actor, entry_id)
+            work.catalog.require(actor, original["material_id"], active=False, kind="finished")
             if original["kind"] != "receipt" or original["reversed_by"]:
                 raise BusinessError("INVENTORY_RECEIPT_NOT_ACTIVE", 409)
             account = work.inventory.account(actor, original["material_id"], lock=True)
@@ -111,7 +117,9 @@ class InventoryService:
     def detail(self, actor, material_id, cursor=None, limit=50):
         self._limit(limit)
         with self.read_transaction() as work:
-            material = work.catalog.require(actor, material_id, active=False)
+            material = work.catalog.require(
+                actor, material_id, active=False, kind=self.material_kind
+            )
             return {
                 "material": material,
                 "account": work.inventory.account(actor, material_id),
@@ -121,7 +129,7 @@ class InventoryService:
     def list(self, actor, cursor=None, limit=50):
         self._limit(limit)
         with self.read_transaction() as work:
-            result = work.inventory.accounts(actor, cursor, limit)
+            result = work.inventory.accounts(actor, cursor, limit, self.material_kind)
             materials = work.catalog.summarize(
                 actor, [item["material_id"] for item in result["items"]]
             )
@@ -138,7 +146,8 @@ class InventoryService:
             raise BusinessError("INVALID_INPUT")
         with self.read_transaction() as work:
             identifiers = sorted(set(map(str, material_ids)))
-            work.catalog.summarize(actor, identifiers)
+            for identifier in identifiers:
+                work.catalog.require(actor, identifier, active=False, kind=self.material_kind)
             return {
                 "items": [
                     {

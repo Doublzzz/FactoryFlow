@@ -72,6 +72,7 @@ class OrderMaterialSummary(StrictDTO):
     unit: str | None
     version: int
     active: bool
+    kind: Literal["finished"] = "finished"
 
 
 class OrderLineResponse(StrictDTO):

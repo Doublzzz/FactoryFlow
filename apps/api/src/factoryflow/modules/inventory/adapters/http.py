@@ -19,6 +19,7 @@ class InventoryMaterial(StrictDTO):
     unit: str | None
     active: bool
     version: int
+    kind: Literal["finished", "raw"] = "finished"
 
 
 class InventoryAccount(StrictDTO):
@@ -35,7 +36,15 @@ class InventoryEntry(StrictDTO):
     id: UUID
     material_id: UUID
     kind: Literal[
-        "opening", "receipt", "count", "delivery", "skip", "delivery_void", "receipt_void"
+        "opening",
+        "receipt",
+        "count",
+        "delivery",
+        "skip",
+        "delivery_void",
+        "receipt_void",
+        "production_receipt",
+        "production_receipt_void",
     ]
     delta: str
     balance_after: str
@@ -49,6 +58,8 @@ class InventoryEntry(StrictDTO):
     reversed_by: UUID | None
     shortage_confirmed: bool
     target_quantity: str | None
+    production_order_id: UUID | None = None
+    production_completion_id: UUID | None = None
 
 
 class InventoryItem(StrictDTO):

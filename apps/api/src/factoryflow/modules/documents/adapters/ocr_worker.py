@@ -271,6 +271,78 @@ def recognize_rapid(image, root, index, python, deadline):
         return failure | {"error_code": "OCR_RESULT_INVALID"}
 
 
+def observe_slash_spaces(image, lines):
+    """Annotate visible gaps beside a located slash; retain raw text and offsets.
+
+    Character boxes are alignment evidence, not ink bounds. Read the actual
+    pixel columns so a tight fraction/model is not reformatted by a text rule.
+    Only specification cells consume these optional annotations.
+    """
+    result = []
+    for line in lines:
+        words = []
+        for word in line.get("words", []):
+            parts = word.get("subwords", [])
+            offsets = set()
+            if "/" in word["text"] and valid_subwords(word, parts):
+                x, y = math.floor(word["x"]), math.floor(word["y"])
+                right = math.ceil(word["x"] + word["width"])
+                bottom = math.ceil(word["y"] + word["height"])
+                if 0 <= x < right <= image.width and 0 <= y < bottom <= image.height:
+                    crop = image.crop((x, y, right, bottom)).convert("L")
+                    # A blank column must contain no dark pixels at any row.
+                    ink = [
+                        crop.crop((i, 0, i + 1, crop.height)).getextrema()[0] < 128
+                        for i in range(crop.width)
+                    ]
+                    ink_bounds = crop.point(lambda value: 255 if value < 128 else 0).getbbox()
+                    ink_height = ink_bounds[3] - ink_bounds[1] if ink_bounds else 0
+                    minimum_gap = max(3, math.ceil(ink_height * 0.28))
+                    for index, part in enumerate(parts):
+                        if part["text"] != "/" or not 0 < index < len(parts) - 1:
+                            continue
+                        previous, following = parts[index - 1], parts[index + 1]
+                        # OCR character boxes can be structurally valid but mislocated.
+                        # Require ordered centers and no material neighbor overlap.
+                        if any(
+                            a["x"] + a["width"] / 2 >= b["x"] + b["width"] / 2
+                            or a["x"] + a["width"] - b["x"]
+                            > max(2, min(a["width"], b["width"]) * 0.2)
+                            for a, b in ((previous, part), (part, following))
+                        ):
+                            continue
+                        center = int(part["x"] + part["width"] / 2) - x
+                        if not 0 <= center < len(ink) or not ink[center]:
+                            continue
+                        left, right_edge = center, center + 1
+                        while left > 0 and ink[left - 1]:
+                            left -= 1
+                        while right_edge < len(ink) and ink[right_edge]:
+                            right_edge += 1
+                        if not ink_height * 0.12 <= right_edge - left <= ink_height * 0.6:
+                            continue
+                        before, after = left, right_edge
+                        while before > 0 and not ink[before - 1]:
+                            before -= 1
+                        while after < len(ink) and not ink[after]:
+                            after += 1
+                        for offset, gap, neighbor in (
+                            (part["start"], left - before, before > 0),
+                            (part["end"], after - right_edge, after < len(ink)),
+                        ):
+                            if (
+                                neighbor
+                                and minimum_gap <= gap <= ink_height * 0.8
+                                and 0 < offset < len(word["text"])
+                                and not word["text"][offset - 1].isspace()
+                                and not word["text"][offset].isspace()
+                            ):
+                                offsets.add(offset)
+            words.append({**word, "observed_space_offsets": sorted(offsets)} if offsets else word)
+        result.append({**line, "words": words})
+    return result
+
+
 def run(root, media_type, engine="windows", python=None):
     from PIL import Image, ImageOps
 
@@ -326,6 +398,7 @@ def run(root, media_type, engine="windows", python=None):
                 header_budget,
                 recognize_rapid,
             )
+            layout_lines = observe_slash_spaces(image, layout_lines)
         pages.append(
             {
                 "number": len(pages) + 1,

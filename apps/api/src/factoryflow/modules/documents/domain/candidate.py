@@ -13,8 +13,9 @@ _META = re.compile(
 )
 _HEADER = re.compile(
     r"(?<![A-Za-z0-9_\u4e00-\u9fff])(?:"
-    r"(?P<number>客户订单号|采购订单号|订单编号|采购单号|订单号|Order\s*(?:No\.?|Number))"
-    r"|(?P<dated>订单日期|下单日期|采购日期|日期|Order\s+Date|Date))"
+    r"(?P<number>客户订单号|采购订单号|订单编号|采购单号|订单号|单号|Order\s*(?:No\.?|Number))"
+    r"|(?P<dated>订单日期|下单日期|采购日期|日期|Order\s+Date|Date)"
+    r"|(?P<currency>币种|Currency))"
     r"(?:\s*[:：]\s*|\s+)",
     re.I,
 )
@@ -27,10 +28,17 @@ _DATE_VALUE = re.compile(
 )
 
 
-def _header_values(raw: str) -> tuple[list[str], list[str], bool]:
+def _header_values(raw: str) -> tuple[list[str], list[str], list[str], bool]:
     headers = list(_HEADER.finditer(raw))
-    numbers, dates = [], []
+    metadata_fields = len(headers)
+    numbers, dates, currencies = [], [], []
     for index, header in enumerate(headers):
+        if re.search(r"(?:^|[\s;；|])(?:备注|说明|Notes?)\s*[:：]", raw[: header.start()], re.I):
+            continue
+        if header["currency"] and re.search(
+            r"(?:payment|settlement|invoice|付款|结算)\s+$", raw[: header.start()], re.I
+        ):
+            continue
         # A generic English Date is not a delivery/signature date suffix.
         if (
             header["dated"]
@@ -51,6 +59,16 @@ def _header_values(raw: str) -> tuple[list[str], list[str], bool]:
         if header["number"]:
             if _ORDER_CODE.fullmatch(value):
                 numbers.append(value)
+        elif header["currency"]:
+            if not re.search(r"[:：]", header[0]) and not re.fullmatch(r"[A-Za-z]{3}", value):
+                # A whitespace-only label must be a complete currency field;
+                # names such as "Currency converter 2 PCS" remain item text.
+                metadata_fields -= 1
+                continue
+            # Keep unknown explicit values in the conflict set; do not silently
+            # prefer one supported currency over a different observed value.
+            if value:
+                currencies.append(value.upper())
         else:
             matched = _DATE_VALUE.fullmatch(value)
             if matched:
@@ -64,10 +82,10 @@ def _header_values(raw: str) -> tuple[list[str], list[str], bool]:
                     )
                 except ValueError:
                     pass
-    return numbers, dates, bool(headers)
+    return numbers, dates, currencies, bool(metadata_fields)
 
 
-def propose(rows: list[str], *, pages: list[dict] | None = None) -> dict:
+def propose(rows: list[str], *, pages: list[dict] | None = None, line_limit: int = 200) -> dict:
     candidate = {
         "order_number": "",
         "business_date": "",
@@ -77,13 +95,11 @@ def propose(rows: list[str], *, pages: list[dict] | None = None) -> dict:
     }
     numbers, dates, currencies = set(), set(), set()
     for raw in rows:
-        row_numbers, row_dates, metadata = _header_values(raw)
+        row_numbers, row_dates, row_currencies, metadata = _header_values(raw)
         numbers.update(row_numbers)
         dates.update(row_dates)
+        currencies.update(row_currencies)
         line = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])", "", raw).strip()
-        currency = re.fullmatch(r"(?:币种|Currency)\s*[:：]\s*(CNY|USD)", line, re.I)
-        if currency:
-            currencies.add(currency[1].upper())
         match = re.fullmatch(
             r"(.+?)\s+([+\-−＋－]?\s*[0-9]+(?:\s*[.,·．，。]\s*[0-9]+)?)"
             r"\s+([A-Za-z.\u4e00-\u9fff]{1,40})",
@@ -96,7 +112,7 @@ def propose(rows: list[str], *, pages: list[dict] | None = None) -> dict:
             and not metadata
             and not _META.search(line)
             and confirm_quantity("1", match[3]).policy.mode != "UNKNOWN"
-            and len(candidate["lines"]) < 200
+            and len(candidate["lines"]) < line_limit
         ):
             candidate["lines"].append(
                 {
@@ -109,13 +125,15 @@ def propose(rows: list[str], *, pages: list[dict] | None = None) -> dict:
             )
     candidate["order_number"] = next(iter(numbers)) if len(numbers) == 1 else ""
     candidate["business_date"] = next(iter(dates)) if len(dates) == 1 else ""
-    candidate["currency"] = next(iter(currencies)) if len(currencies) == 1 else ""
+    candidate["currency"] = (
+        next(iter(currencies)) if len(currencies) == 1 and currencies <= {"CNY", "USD"} else ""
+    )
     if pages is not None:
         candidate["lines"] = []
         for number, page in enumerate(pages, start=1):
-            result = table_result(page)
+            result = table_result(page, line_limit=line_limit)
             if result is None:
-                lines = propose(page["rows"])["lines"]
+                lines = propose(page["rows"], line_limit=line_limit)["lines"]
             else:
                 lines = result["lines"]
                 if result["unresolved_regions"]:
@@ -123,5 +141,5 @@ def propose(rows: list[str], *, pages: list[dict] | None = None) -> dict:
                         {"code": "TABLE_COVERAGE_UNRESOLVED", "page": page.get("number", number)}
                     )
             candidate["lines"].extend(lines)
-        candidate["lines"] = candidate["lines"][:200]
+        candidate["lines"] = candidate["lines"][:line_limit]
     return candidate

@@ -1,5 +1,25 @@
 # Verification scope / 验证范围
 
+## preview.3 public candidate — 2026-11-04
+
+The independent public checkout was validated on Windows with its own Python/Node dependencies and a new disposable PostgreSQL 18 cluster. The full Python suite passed **1,248 tests, with 1 skip and no failures**, in 923.31 seconds. The skip requires an explicitly supplied original PostgreSQL build input for testing the manifest transformation. This release reuses the already transformed runtime after checking every frozen file hash; it does not claim to have rerun that transformation test. All **27 Windows factory-local tests passed**, including the Windows code-page/minimum-version contracts.
+
+Ruff and formatting, four Node language tests, translation coverage (1,783 translations / 1,618 literal calls), architecture, OpenAPI/TypeScript drift, typecheck, frontend build and whitespace checks passed. The web build retains a greater-than-500-kB chunk warning. The dependency install reported five development-dependency audit findings; `npm audit --omit=dev` reported zero production-dependency findings. No dependency upgrades are included in this release.
+
+The ZIP build **`e8afc55a99d89c32`** has 7,043 app files. All 7,043 frozen base files were checked before assembly; 141 backend Python source files were checked against the public source. Four backend files differed only in formatting (equal Python AST); the packaged versions now use the public source bytes. Migrations and third-party runtime inputs are retained. The frontend is built from the public login-only UI. The default data root and all 12 app command files are regenerated from the public builder, without machine-specific Smoke paths. Exact inputs/differences are described in [DISTRIBUTION](DISTRIBUTION.md).
+
+The final ZIP passed CRC validation, was extracted, and was installed into a new directory using its bundled Python with desktop shortcuts disabled. The installed package then passed blank first setup, a synthetic order/partial-delivery/formal-statement/Excel flow, actual offline OCR inference, restart with identical saved output, and backup/restore into a separate data home. Checks used a restricted PATH and HTTP(S) proxies aimed at an unused loopback port. Test services were stopped afterwards. OCR execution does not establish recognition quality for arbitrary documents.
+
+A headless isolated browser checked the actual public web assets at 1280, 390 and 320px in Chinese and English: account layout, overflow and logout-to-login transitions passed, with no captured page errors or external requests. API responses in this layout check were synthetic mocks; it is not a live browser business-flow check. The browser and static server were closed. Real package business checks above used the installed API.
+
+公开候选实际验证：Windows 全量 **1,248 passed / 1 skipped**，27 项 Windows 入口合同通过；最终 ZIP 安装、空白设置、订单送货/正式对账 Excel、离线 OCR、重启及独立备份恢复通过。三种宽度、中英文账号布局通过，其 API 为合成模拟。公开包 build 为 `e8afc55a99d89c32`，与已交付的 `b4e2d4b6ea86c4b2` 分别标识。
+
+The maintainer separately confirmed non-test local operation of the delivered base on 2026-11-04. That confirmation does not establish complete factory acceptance of this public ZIP. Clean-machine Windows 10/11, all real workflows, physical printing, arbitrary OCR documents and a user's normal double-click/browser path remain separate acceptance work. GitHub CI for this public revision is recorded when its run finishes; the prior private-repository run is not substituted for it.
+
+## Historical releases
+
+The following sections describe earlier versions and their then-current preparation/publication states.
+
 ## GitHub Actions — 2026-10-26
 
 [Run 40316043350](https://github.com/Doublzzz/FactoryFlow/actions/runs/40316043350) passed on commit `579fdcb544aa4910a8838bae112d5d1ebe06d059` with a real PostgreSQL 18 service and matching backup tools. The Linux test result was **1003 passed, 10 skipped in 223.26s**; Windows-specific skips retain their platform reasons. The workflow also passed build, Ruff, language, architecture, contract and TypeScript checks. These results complement the 1013-test Windows run below; they do not establish a Linux product package or factory acceptance.

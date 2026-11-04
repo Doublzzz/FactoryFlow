@@ -30,6 +30,9 @@ SUPPORTED_BACKUP_REVISIONS = {
     "0012_external_document_number",
     "0013_material_pool",
     "0014_finished_goods_inventory",
+    "0015_order_currencies",
+    "0016_purchasing_raw_inventory",
+    "0017_production",
     REVISION,
 }
 

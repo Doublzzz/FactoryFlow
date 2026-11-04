@@ -14,7 +14,7 @@ class ArchiveDocumentRepository:
                 text(
                     "SELECT s.*, i.order_id FROM source_files s LEFT JOIN source_imports i "
                     "ON i.organization_id=s.organization_id AND i.source_id=s.id "
-                    "WHERE s.organization_id=:org AND s.id=:id"
+                    "WHERE s.organization_id=:org AND s.id=:id AND s.purpose='sales_order'"
                 ),
                 {"org": actor.organization_id, "id": identifier},
             )
@@ -32,7 +32,7 @@ class ArchiveDocumentRepository:
                 text(
                     "SELECT s.*, i.order_id FROM source_files s LEFT JOIN source_imports i "
                     "ON i.organization_id=s.organization_id AND i.source_id=s.id "
-                    "WHERE s.organization_id=:org "
+                    "WHERE s.organization_id=:org AND s.purpose='sales_order' "
                     "AND (CAST(:cursor AS uuid) IS NULL OR s.id<CAST(:cursor AS uuid)) "
                     "ORDER BY s.id DESC LIMIT :limit"
                 ),

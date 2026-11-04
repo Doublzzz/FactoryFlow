@@ -1,0 +1,55 @@
+.purchasing-tabs { margin-bottom: 1rem; }
+.purchasing-detail, .purchasing-form { margin-top: 1rem; }
+.purchasing-page td small, .purchasing-draft-line small { display: block; color: var(--muted, #64748b); margin-top: .25rem; white-space: pre-wrap; }
+.purchasing-page table { min-width: 620px; }
+.purchasing-page td { vertical-align: top; }
+.purchasing-form > form > label { display: grid; gap: .4rem; margin: 1rem 0; }
+.purchasing-form > form > .checkbox { display: flex; align-items: center; }
+.purchasing-picker { margin: 1rem 0; padding-bottom: .75rem; border-bottom: 1px solid var(--border, #dce4df); }
+.purchasing-draft-line { display: grid; grid-template-columns: minmax(0, 1fr) minmax(8rem, 12rem) auto; gap: 1rem; align-items: center; padding: .75rem 0; border-bottom: 1px solid var(--border, #dce4df); }
+.purchasing-draft-line label { display: grid; gap: .35rem; }
+.purchasing-page .row-between { gap: 1rem; flex-wrap: wrap; }
+.purchasing-page td input { min-width: 8rem; }
+.purchase-entry { margin-top: 1.5rem; }
+.purchase-entry-layout { margin-top: 1rem; }
+.purchase-entry-layout > * { min-width: 0; }
+.purchase-order-form fieldset { border: 0; padding: 0; margin: 1rem 0; min-width: 0; }
+.purchase-order-form h3 { margin: 1rem 0 .5rem; }
+.purchase-selected { padding: .75rem 0; }
+.purchase-entry-lines { display: grid; gap: 1rem; }
+.purchase-entry-line { border: 1px solid var(--line); border-radius: 8px; padding: 1rem; min-width: 0; }
+.purchase-entry-line p { margin: .6rem 0; overflow-wrap: anywhere; }
+.purchase-entry-line small { display: block; color: var(--muted); white-space: pre-wrap; }
+.purchase-line-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; margin-top: .75rem; }
+.purchase-line-values label, .purchase-inline-editor label, .purchase-print-options label { display: grid; gap: .35rem; min-width: 0; }
+.purchase-inline-editor { background: var(--soft); padding: 1rem; margin: .7rem 0; border-radius: 7px; }
+.purchase-inline-editor .actions, .purchase-print-options label { margin-top: .75rem; }
+.purchase-inline-editor .material-options { max-height: 320px; overflow-y: auto; }
+.purchase-sheet-mapping, .purchase-print-options, .purchase-saved-prices { margin: 1rem 0; }
+.purchase-sheet-mapping summary, .purchase-print-options summary, .purchase-saved-prices summary { cursor: pointer; padding: .5rem 0; }
+.purchase-source-grid { max-height: 540px; overflow: auto; }
+.purchase-source-grid table { min-width: 650px; }
+.purchase-source-grid td { min-width: 110px; max-width: 200px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.purchase-source-grid thead { position: sticky; top: 0; background: var(--soft); }
+.purchase-file-input { display: grid; gap: .75rem; padding: 1rem 0; }
+.purchasing-page .button-link { display: inline-flex; align-items: center; justify-content: center; padding: .6rem 1rem; text-decoration: none; border: 1px solid var(--line); border-radius: 6px; }
+@media (max-width: 1150px) {
+  .source-entry-layout.purchase-entry-layout { grid-template-columns: 1fr; }
+  .purchase-entry-layout .source-review { position: static; }
+  .purchase-source-grid { max-height: 300px; }
+}
+@media (max-width: 600px) {
+  .purchasing-page .purchase-entry .form-grid { grid-template-columns: 1fr; }
+  .purchasing-page .purchasing-receipt-lines { min-width: 100%; table-layout: fixed; }
+  .purchasing-page .purchasing-receipt-lines th { white-space: normal; }
+  .purchasing-receipt-lines th:first-child { width: 50%; }
+  .purchasing-receipt-lines th:nth-child(2) { width: 32%; }
+  .purchasing-receipt-lines td, .purchasing-receipt-lines th { padding: .7rem .5rem; overflow-wrap: anywhere; }
+  .purchasing-page .page-heading { align-items: stretch; flex-direction: column; gap: .7rem; }
+  .purchasing-page .form-grid { grid-template-columns: 1fr; }
+  .purchasing-page .actions { flex-wrap: wrap; }
+  .purchasing-draft-line { grid-template-columns: minmax(0, 1fr) auto; }
+  .purchasing-draft-line > div { grid-column: 1 / -1; }
+  .purchase-line-values { grid-template-columns: 1fr; }
+  .purchase-entry-line, .purchase-inline-editor { padding: .75rem; }
+}

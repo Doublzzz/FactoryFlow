@@ -22,7 +22,8 @@ class MaterialRepository:
         return {
             key: str(value) if key in {"id", "created_by", "updated_by"} else value
             for key, value in row.items()
-            if key in {"id", "own_code", "name", "specification", "unit", "active", "version"}
+            if key
+            in {"id", "own_code", "name", "specification", "unit", "active", "version", "kind"}
         }
 
     def get(self, actor, identifier):
@@ -51,7 +52,8 @@ class MaterialRepository:
 
     def import_candidates(self, actor, name, specification):
         rows = self.conn.execute(
-            text("""SELECT * FROM materials WHERE organization_id=:org AND active
+            text("""SELECT * FROM materials
+            WHERE organization_id=:org AND active AND kind='finished'
             AND ((:name<>'' AND strpos(lower(name),lower(:name))>0)
               OR specification=:spec)
             ORDER BY own_code,id LIMIT 5"""),
@@ -61,7 +63,13 @@ class MaterialRepository:
 
     def insert(self, actor, data):
         identifier = uuid7()
-        params = {**data, "id": identifier, "org": actor.organization_id, "actor": actor.user_id}
+        params = {
+            "kind": "finished",
+            **data,
+            "id": identifier,
+            "org": actor.organization_id,
+            "actor": actor.user_id,
+        }
         automatic = data["own_code"] is None
         for _ in range(10000 if automatic else 1):
             if automatic:
@@ -70,8 +78,8 @@ class MaterialRepository:
             row = (
                 self.conn.execute(
                     text("""INSERT INTO materials
-                (organization_id,id,own_code,name,specification,unit,created_by,updated_by)
-                VALUES(:org,:id,:own_code,:name,:specification,:unit,:actor,:actor)
+                (organization_id,id,own_code,name,specification,unit,kind,created_by,updated_by)
+                VALUES(:org,:id,:own_code,:name,:specification,:unit,:kind,:actor,:actor)
                 ON CONFLICT (organization_id,own_code) DO NOTHING RETURNING *"""),
                     params,
                 )
@@ -102,18 +110,24 @@ class MaterialRepository:
         )
         return self.view(row)
 
-    def list(self, actor, query, offset, limit):
+    def list(self, actor, query, offset, limit, kind="finished"):
         # strpos treats user punctuation literally (no wildcard interpretation).
         rows = (
             self.conn.execute(
                 text("""SELECT m.* FROM materials m WHERE m.organization_id=:org
-            AND (:q='' OR strpos(
+            AND m.kind=:kind AND (:q='' OR strpos(
                 lower(m.own_code||' '||m.name||' '||coalesce(m.specification,'')),lower(:q))>0
               OR EXISTS(SELECT 1 FROM customer_material_codes c
                 WHERE c.organization_id=m.organization_id
                 AND c.material_id=m.id AND strpos(lower(c.customer_code),lower(:q))>0))
             ORDER BY m.own_code,m.id LIMIT :limit OFFSET :offset"""),
-                {"org": actor.organization_id, "q": query, "offset": offset, "limit": limit + 1},
+                {
+                    "org": actor.organization_id,
+                    "q": query,
+                    "offset": offset,
+                    "limit": limit + 1,
+                    "kind": kind,
+                },
             )
             .mappings()
             .all()

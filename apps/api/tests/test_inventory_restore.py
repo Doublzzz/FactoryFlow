@@ -87,20 +87,31 @@ def test_iv24_0013_backup_failure_rollback_and_restore_keep_old_delivery_untrack
                 "Synthetic Legacy Stock", "synthetic", SYNTHETIC_PASSWORD
             )
             customer = runtime.customers.create(actor, uuid4(), "Synthetic Legacy Customer")
-            material = runtime.materials.create(
-                actor, uuid4(), {"name": "Synthetic Legacy Item", "unit": "KG"}
-            )
-            order_input = payload() | {
-                "customer_id": customer["id"],
-                "material_choices": [
-                    {
-                        "line_number": 1,
-                        "material_id": material["id"],
-                        "expected_material_version": 1,
-                    },
-                ],
-            }
+            # Frozen 0013 fixture: current material commands require the 0016 kind column.
+            material = {"id": str(uuid4())}
+            with owner.begin() as conn:
+                assert conn.scalar(text("SELECT version_num FROM alembic_version")) == (
+                    "0013_material_pool"
+                )
+                conn.execute(
+                    text("""INSERT INTO materials
+                    (organization_id,id,own_code,name,unit,created_by,updated_by)
+                    VALUES(:org,:id,'SYNTHETIC-LEGACY','Synthetic Legacy Item','KG',:actor,:actor)
+                    """),
+                    {"org": actor.organization_id, "id": material["id"], "actor": actor.user_id},
+                )
+            order_input = payload() | {"customer_id": customer["id"]}
             confirmed = runtime.orders.confirm(actor, uuid4(), order_input)
+            with owner.begin() as conn:
+                conn.execute(
+                    text("""UPDATE order_lines SET material_id=:material
+                    WHERE organization_id=:org AND order_id=:order"""),
+                    {
+                        "org": actor.organization_id,
+                        "material": material["id"],
+                        "order": confirmed["order_id"],
+                    },
+                )
             order = runtime.orders.detail(actor, confirmed["order_id"])
             key = uuid4()
             delivery_body = {

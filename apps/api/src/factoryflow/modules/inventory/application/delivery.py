@@ -18,6 +18,8 @@ class InventoryDeliveryEffects:
 
     def on_create(self, actor, delivery, lines, decision):
         identifiers = sorted({line["material_id"] for line in lines if line.get("material_id")})
+        for identifier in identifiers:
+            self.catalog.require(actor, identifier, active=False, kind="finished")
         accounts = {
             identifier: self.inventory.account(actor, identifier, lock=True)
             for identifier in identifiers

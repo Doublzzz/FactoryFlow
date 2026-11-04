@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import importlib.metadata as metadata
+import importlib.util
 import io
 import json
 import shutil
@@ -36,6 +37,15 @@ def tree(source, destination):
     shutil.copytree(
         source, destination, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".git")
     )
+
+
+def prepare_postgres(source, target):
+    spec = importlib.util.spec_from_file_location(
+        "postgres_utf8_build", Path(__file__).with_name("prepare-postgres-utf8.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.prepare(source, target)
 
 
 def python_runtime(source, destination):
@@ -180,9 +190,14 @@ def build(
         ROOT / "alembic.ini",
         ROOT / "scripts/factory-local.py",
         ROOT / "scripts/install-offline.py",
+        ROOT / "scripts/launch-offline.py",
+        ROOT / "scripts/offline-setup.html",
+        ROOT / "scripts/recover-offline.py",
+        ROOT / "scripts/offline-recovery.html",
         ROOT / "docs/FACTORY-OFFLINE-GUIDE.txt",
         ROOT / "docs/FACTORY-OFFLINE-GUIDE-en.txt",
         Path(sys.base_prefix) / "python.exe",
+        Path(sys.base_prefix) / "pythonw.exe",
         ocr_base / "python.exe",
         notices_directory / "README.md",
         notices_directory / "inventory.json",
@@ -222,8 +237,7 @@ def build(
         omitted=tuple(item["path"] for item in omissions),
     )
     tree(ROOT / "apps/api/src/factoryflow", app / "runtime/python/Lib/site-packages/factoryflow")
-    for directory in ("bin", "lib", "share"):
-        tree(pg / directory, app / "runtime/postgresql" / directory)
+    prepare_postgres(pg, app / "runtime/postgresql")
     # Python's supplied redistributable C runtime also serves the local PostgreSQL executables.
     for path in (app / "runtime/python").glob("vcruntime*.dll"):
         shutil.copy2(path, app / "runtime/postgresql/bin" / path.name)
@@ -234,10 +248,22 @@ def build(
     (app / "third-party/postgresql").mkdir(exist_ok=True)
     for name in pg_licenses:
         shutil.copy2(pg / name, app / "third-party/postgresql" / name)
+    shutil.copy2(
+        app / "runtime/postgresql/path-encoding.json",
+        app / "third-party/postgresql/PROCESS-ENCODING.json",
+    )
     tree(ROOT / "migrations", app / "migrations")
     shutil.copy2(ROOT / "alembic.ini", app / "alembic.ini")
     (app / "scripts").mkdir()
     shutil.copy2(ROOT / "scripts/factory-local.py", app / "scripts/factory-local.py")
+    for name in (
+        "install-offline.py",
+        "launch-offline.py",
+        "offline-setup.html",
+        "recover-offline.py",
+        "offline-recovery.html",
+    ):
+        shutil.copy2(ROOT / "scripts" / name, app / "scripts" / name)
     shutil.copy2(ROOT / "scripts/install-offline.py", output / "install.py")
     shutil.copy2(ROOT / "docs/FACTORY-OFFLINE-GUIDE.txt", output / "使用说明.txt")
     shutil.copy2(ROOT / "docs/FACTORY-OFFLINE-GUIDE-en.txt", output / "Read me.txt")
@@ -266,6 +292,12 @@ def build(
             + " --language "
             + language
             + "\r\npause\r\n"
+        )
+        (app / (name + ".cmd")).write_text(content, encoding="utf-8", newline="")
+    for name, language in (("重设登录密码", "zh-CN"), ("Reset Login Password", "en")):
+        content = (
+            '@echo off\r\nsetlocal\r\n"%~dp0runtime\\python\\pythonw.exe" -I -X utf8 '
+            '"%~dp0scripts\\recover-offline.py" --language ' + language + "\r\n"
         )
         (app / (name + ".cmd")).write_text(content, encoding="utf-8", newline="")
     setup = (
@@ -299,9 +331,10 @@ def build(
     manifest = {
         "kind": "factoryflow-offline-v1",
         "build_id": identifier,
-        "platform": "Windows 10/11 x64",
+        "platform": "Windows 10 1903+ / Windows 11 x64",
         "python": sys.version.split()[0],
         "postgresql": "18.6",
+        "postgresql_path_encoding": "utf-8",
         "dependencies": primary,
         "ocr_dependencies": ocr,
         "omitted_optional_components": omissions,

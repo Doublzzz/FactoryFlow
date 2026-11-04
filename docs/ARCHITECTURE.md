@@ -6,7 +6,7 @@ FactoryFlow is a modular monolith: React/TypeScript web UI, a Python/FastAPI API
 
 `apps/api/src/factoryflow/bootstrap.py` is the composition root. Business capabilities live in `modules/<capability>/domain`, `application`, `adapters` and `public.py`. Pure domain code does not depend on HTTP or ORM. Cross-module callers import the owner's public interface. `kernel` contains only shared small value/error primitives; `platform` owns technical lifecycle concerns.
 
-Current modules: identity, customers, documents, orders, fulfillment, statements, archives, materials and optional finished-goods inventory. No general plugin platform is included.
+Current modules: identity, customers, documents, orders, fulfillment, statements, archives, materials, inventory (finished goods and raw materials), purchasing and production. No general plugin platform is included.
 
 ## Data and commands
 
@@ -16,11 +16,13 @@ Fulfillment calls the inventory public interface within its command transaction.
 
 Confirmed revisions and export snapshots remain immutable evidence. Object bytes are stored by content hash; database references become authoritative only when the command commits. Existing outputs are not regenerated merely because the user changes interface language.
 
+Purchasing owns suppliers, purchase/receipt facts and their immutable snapshots; inventory owns balances and movements. Purchasing and production call inventory public interfaces using the owning command's transaction. Documents owns extraction and source-purpose contracts; purchase creation atomically claims its reviewed source. Production owns order-linked plans and completion facts, with the stock effect in the same transaction.
+
 ## Contracts and runtime
 
 Server DTOs project to `contracts/openapi.json` and `packages/api-client/src/schema.d.ts`. Use `scripts/export-openapi.py` and `npm run contracts:generate` to regenerate. `scripts/check_architecture.py` checks import boundaries.
 
-The application does not perform migrations or initialize data on import/startup. Schema migration is an explicit administration command; current head is `0015_order_currencies`, after `0014_finished_goods_inventory`. Runtime roles are separate from administration. Source does not contain actual runtime account credentials or customer documents.
+The application does not perform migrations or initialize data on import/startup. Schema migration is an explicit administration command; current head is `0018_purchase_documents`, after purchasing/raw materials (`0016`) and production (`0017`). Runtime roles are separate from administration. Source does not contain actual runtime account credentials or customer documents.
 
 ## Language
 

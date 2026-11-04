@@ -1,5 +1,17 @@
 # Status / 当前状态
 
+## v0.1.0-preview.3 — 2026-11-04
+
+Public Windows build: `e8afc55a99d89c32`. Local Windows validation: 1,248 passed / 1 skipped; final ZIP installation and isolated backup/restore passed.
+
+Current source includes supplier purchasing, raw-material inventory, a small production workflow, reviewed purchase-document input and the latest local-installation/OCR/account-layout fixes. Schema head is `0018_purchase_documents`. See [release notes](RELEASE-NOTES.md) for the complete scope and [verification](VERIFICATION.md) for actual checks.
+
+维护者已确认本版所基于的交付版本 `b4e2d4b6ea86c4b2` 在非测试本机部署并跑通。公开构建单独编号和检查；真实业务、OCR、打印及其他设备仍保留验收边界。MIT 署名与许可证继续保留。
+
+The sections below are historical release records; their scope and pending statements describe those earlier versions.
+
+以下是历史版本记录，不能替代本版状态。
+
 ## v0.1.0-preview.2 — 2026-10-26
 
 This source targets [v0.1.0-preview.2](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.2), a Windows developer preview. The [first GitHub Actions run](https://github.com/Doublzzz/FactoryFlow/actions/runs/40316043350) passed on commit `579fdcb544aa4910a8838bae112d5d1ebe06d059`. Release availability is shown on the release page; preview.1 remains available. The public-source update starts from `5cfd96a382e61e52cc49d51cb17f3a89b8584f74`.

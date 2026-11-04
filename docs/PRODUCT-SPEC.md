@@ -30,6 +30,20 @@ Inventory is optional. Open each finished item's balance from a physical count, 
 
 A delivery either deducts linked finished-goods stock or explicitly skips stock handling for later review. A shortage requires explicit confirmation before a book balance can go negative. Delivery, stock movements, audit and idempotency results commit together. Voiding a delivery reverses its original movements. An external return reference on a statement does not itself create a stock return.
 
+## Supplier purchasing and raw-material inventory
+
+Finished goods and raw materials have immutable kinds and separate inventory use. A supplier can be disabled without deleting historical snapshots. A purchase has one supplier and fixed material/quantity/unit snapshots. Creating it does not receive stock. Receiving may refer to purchase lines or be direct from a supplier; partial receipts cannot exceed a purchase's outstanding quantity. Closing a purchase stops new receipts without rewriting past receipts.
+
+Open raw-material balances explicitly. Receipt, issue, return and count movements remain immutable. Issues cannot exceed the available balance; partial returns refer to the original issue and cannot exceed the unreturned quantity. Voiding a receipt reverses the whole receipt atomically, requires a reason and sufficient current balance, and is not a real supplier return. Versioned counts reject stale concurrent changes. Transactions retain ownership, audit, idempotency and database concurrency safeguards.
+
+## Reviewed purchase documents
+
+Sales-order sources and purchase sources have distinct purposes. Image/PDF extraction and Excel mapping produce candidates only; people verify supplier, items, units, quantities, optional prices and currency. An unknown price stays unknown and is distinct from zero. Money uses Decimal and the document's CNY/USD currency. Saving a purchase and its source reference is one transaction and must not create a receipt. A source cannot create another purchase through a second key or concurrent request. Print views use saved snapshots and do not write business records.
+
+## Small production workflow
+
+Plan from an order line linked to a finished item. Reference raw-material issues and partial returns explicitly; no automatic BOM consumption is inferred. Record good and scrapped quantities in batches. Accepted good completion and the finished-goods receipt commit together, with audit and idempotency. Good completion cannot exceed the remaining plan. A whole completion can be voided with a reason only when its linked stock can be reversed; a production order can be closed explicitly. Completion is not delivery and does not consume the customer's outstanding delivery quantity. Earlier business evidence remains unchanged.
+
 ## Deliberately absent
 
-Raw materials, purchasing, production/BOM, batches, multiple warehouses, costing, exchange rates, invoices, payment processing, overseas accounting/tax and a general plugin platform are outside this preview. Preparing this source does not establish production acceptance or authorize publication. The synthetic order examples are documents for demonstrations, not ready-made customer data for a real business database.
+BOM, automatic scheduling, batches, multiple warehouses, costing, exchange rates, invoices, payment processing, overseas accounting/tax and a general plugin platform are outside this preview. Preparing this source does not establish production acceptance or authorize publication. The synthetic order examples are documents for demonstrations, not ready-made customer data for a real business database.

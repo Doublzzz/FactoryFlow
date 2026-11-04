@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.2"><img alt="Windows preview" src="https://img.shields.io/github/v/release/Doublzzz/FactoryFlow?include_prereleases&label=Windows%20preview&color=5b6ee1"></a>
+  <a href="https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.3"><img alt="Windows preview" src="https://img.shields.io/github/v/release/Doublzzz/FactoryFlow?include_prereleases&label=Windows%20preview&color=5b6ee1"></a>
   <img alt="Data stays local" src="https://img.shields.io/badge/data-stays%20local-2f8f5b">
   <img alt="UI in Chinese and English" src="https://img.shields.io/badge/UI-%E4%B8%AD%E6%96%87%20%7C%20English-555">
   <a href="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml"><img alt="CI" src="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml/badge.svg?branch=main"></a>
@@ -32,7 +32,7 @@
 
 FactoryFlow is for small factory owners and the office staff who handle customer orders, coordinate deliveries and prepare customer statements. Keep track of what was ordered, what has been delivered, what is still outstanding, and what the customer has accepted.
 
-It may also suit a trading business that only needs customer orders, partial deliveries and reconciliation. Optional finished-goods inventory is included in preview.2. Supplier purchasing, raw materials, production/BOM and margin reporting are not included.
+It may also suit a trading business that only needs customer orders, partial deliveries and reconciliation. Optional finished-goods inventory is included in preview.3. Supplier purchasing, raw-material inventory and a small production workflow are included. BOM, automatic scheduling and costing/margin reporting are not included.
 
 ## Why it works this way
 
@@ -55,7 +55,7 @@ FactoryFlow was built with direct involvement from frontline factory staff, and 
 
 ## Download and try
 
-Windows 10/11 x64 developer preview: [v0.1.0-preview.2](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.2). Download `FactoryFlow-Windows-x64-v0.1.0-preview.2.zip` (about 174 MB), with CNY/USD, English installation and optional finished-goods inventory.
+Windows 10 1903+ / Windows 11 x64 developer preview: [v0.1.0-preview.3](https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.3). Download `FactoryFlow-Windows-x64-v0.1.0-preview.3.zip`, with purchasing, raw materials, production records, CNY/USD, English installation and optional finished-goods inventory.
 
 1. Extract the whole ZIP and run `Install.cmd` for English, or `安装.cmd` for Chinese. Review the third-party component terms and follow the installation prompts.
 2. Open the FactoryFlow desktop shortcut. On first launch, set your factory name and local account.
@@ -85,11 +85,17 @@ Try this preview with a new data directory and keep existing installations and b
 
 **5. Export and file.** Export statements in the built-in format or the customer's own Excel template, and keep order originals, delivery copies and statements filed together.
 
-## Finished goods and currencies in preview.2
+## Inventory, purchasing, production and currencies
 
-**Use finished-goods inventory when you need it.** Orders, deliveries and statements work without it. Open a balance for each finished item, record receipts and physical counts, then deduct stock with a delivery or explicitly skip it for later review. A shortage needs confirmation before the book balance may go negative. Voiding a delivery reverses its original stock movements; historical deliveries are not deducted retroactively, and an unopened item is not zero stock. Raw materials, purchasing, production/BOM, batches, multiple warehouses and costing are outside this scope.
+**Use finished-goods inventory when you need it.** Orders, deliveries and statements work without it. Open a balance for each finished item, record receipts and physical counts, then deduct stock with a delivery or explicitly skip it for later review. A shortage needs confirmation before the book balance may go negative. Voiding a delivery reverses its original stock movements; historical deliveries are not deducted retroactively, and an unopened item is not zero stock. Raw materials are managed separately from finished goods. BOM, batches, multiple warehouses and costing are outside this scope.
 
 **Keep CNY and USD separate.** Each order and statement has one currency; a confirmed order's currency cannot change. For the same customer and period, use separate statements for each currency. Amounts are never combined across currencies or converted. Interface language is independent of currency. This adds no payments, invoicing or foreign tax rules.
+
+**Purchasing and raw materials.** Import an image/PDF or Excel sheet, or enter a purchase manually, then review, save and print. Saving a purchase does not receive stock. Receive against a purchase order or directly from a supplier; explicitly open raw-material balances, issue, return against an issue and count stock. Prices may be unknown; no payment is inferred.
+
+**Small production workflow.** Plan from an order line, link material issues/returns, record good and scrapped quantities, and put accepted completion into finished-goods stock atomically. Completion is not delivery. There is no automatic BOM consumption or scheduling.
+
+**Delivery status, 2026-11-04.** The maintainer confirmed that the version underlying this release was deployed and ran on a non-test local installation. The public package has its own stated checks. Real workflow coverage, physical printing, OCR across document types and other devices remain subject to separate acceptance; see [release notes](docs/RELEASE-NOTES.md). The demo images above illustrate the basic workflow in an earlier version.
 
 ## Current limits
 
@@ -102,7 +108,7 @@ Try this preview with a new data directory and keep existing installations and b
 
 ## Custom features and new modules
 
-Finished-goods inventory is now part of the preview.2. For other workflows or features tailored to your factory, [get in touch](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml). Tell me who will use it, how you handle the work today, and what you need it to do. We can discuss the scope from there.
+Finished-goods inventory, purchasing/raw materials and production records are now part of preview.3. For other workflows or features tailored to your factory, [get in touch](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml). Tell me who will use it, how you handle the work today, and what you need it to do. We can discuss the scope from there.
 
 For now, use the GitHub feature request form to start the conversation. Keep public posts to a general description; leave out real customer documents and sensitive business information.
 
@@ -126,4 +132,4 @@ Feedback is welcome in [GitHub Issues](https://github.com/Doublzzz/FactoryFlow/i
 
 ## License
 
-[MIT](LICENSE): commercial use and closed-source redistribution are allowed with the copyright and license notices retained. Fonts and dependencies keep their own licenses; see [third-party materials](THIRD-PARTY-NOTICES.md).
+[MIT](LICENSE): commercial use and closed-source redistribution are allowed with `Copyright (c) 2026 Doublzzz` and the full license notice retained. Fonts and dependencies keep their own licenses; see [third-party materials](THIRD-PARTY-NOTICES.md).

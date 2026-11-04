@@ -9,7 +9,7 @@ from sqlalchemy.engine import make_url
 
 from factoryflow.kernel.contracts import Actor, BusinessError
 
-REVISION = "0015_order_currencies"
+REVISION = "0018_purchase_documents"
 
 
 def engine_for(url: str):

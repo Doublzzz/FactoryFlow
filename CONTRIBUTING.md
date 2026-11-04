@@ -2,7 +2,7 @@
 
 ## English
 
-Read [README](README.en.md), [STATUS](docs/STATUS.md), [AGENTS.md](AGENTS.md), and the relevant business contract before changing code. This guide describes the preview.2 source. The [verification workflow](.github/workflows/verify.yml) runs on pushes and pull requests. See [Actions](https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml) for current results and [verification](docs/VERIFICATION.md) for the tested release scope.
+Read [README](README.en.md), [STATUS](docs/STATUS.md), [AGENTS.md](AGENTS.md), and the relevant business contract before changing code. This guide describes the preview.3 source. The [verification workflow](.github/workflows/verify.yml) runs on pushes and pull requests. See [Actions](https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml) for current results and [verification](docs/VERIFICATION.md) for the tested release scope.
 
 ### Set up and check
 
@@ -36,7 +36,7 @@ Keep each PR focused. Describe the problem, resulting behavior, checks actually 
 
 ## 简体中文
 
-修改前先读 [README](README.md)、[STATUS](docs/STATUS.md)、[AGENTS.md](AGENTS.md) 和相关业务合同。本指南面向 preview.2 源码。[验证工作流](.github/workflows/verify.yml) 在推送和 PR 时运行；当前结果见 [Actions](https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml)，版本验证范围见[验证记录](docs/VERIFICATION.md)。
+修改前先读 [README](README.md)、[STATUS](docs/STATUS.md)、[AGENTS.md](AGENTS.md) 和相关业务合同。本指南面向 preview.3 源码。[验证工作流](.github/workflows/verify.yml) 在推送和 PR 时运行；当前结果见 [Actions](https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml)，版本验证范围见[验证记录](docs/VERIFICATION.md)。
 
 ### 准备与检查
 

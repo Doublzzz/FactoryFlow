@@ -22,6 +22,14 @@ export type Material = Schemas["MaterialResponse"];
 export type InventoryDetail = Schemas["InventoryDetail"];
 export type InventoryAccount = Schemas["InventoryAccount"];
 export type InventoryEntry = Schemas["InventoryEntry"];
+export type RawInventoryEntry = Schemas["RawInventoryEntry"];
+export type RawInventoryDetail = Schemas["RawInventoryDetail"];
+export type Supplier = Schemas["SupplierResponse"];
+export type PurchaseOrder = Schemas["PurchaseOrderResponse"];
+export type PurchaseReceipt = Schemas["PurchaseReceiptResponse"];
+export type ProductionOrder = Schemas["ProductionResponse"];
+export type ProductionIssue = Schemas["ProductionIssue"];
+export type ProductionCompletion = Schemas["ProductionCompletion"];
 export type InventoryItem = Schemas["InventoryItem"];
 export type MaterialInput = Schemas["MaterialInput"];
 export type MaterialCode = Schemas["MaterialCodeResponse"];
@@ -63,8 +71,55 @@ function value<T>(result: { data?: T; error?: unknown; response: Response }): T 
 }
 
 const serviceErrors: Record<string, string> = {
-  "INVENTORY_ALREADY_OPEN": "这个成品已经开始记录库存，请重新读取当前余额。",
-  "INVENTORY_NOT_MANAGED": "这个成品还未开账，请先按当前实物数量开始记录。",
+  "PURCHASE_SHEET_INVALID": "无法读取这份Excel，请另存为.xlsx后重试。",
+  "PURCHASE_SHEET_UNSUPPORTED": "Excel含不支持的格式，请移除筛选、宏、外链或复杂对象后重试。",
+  "PURCHASE_SHEET_LIMIT": "Excel上限为2MiB、300行、30列；解压后不超过20MiB。",
+  "PURCHASE_SHEET_HIDDEN_DATA": "Excel含隐藏的非空数据，请取消隐藏并核对后重新上传。",
+  "PURCHASE_SHEET_MULTIPLE_SHEETS": "Excel需要一个非空工作表，请拆分文件后重新上传。",
+  "PURCHASE_SHEET_MAPPING": "请核对Excel表头行、明细范围及字段列。",
+  "PURCHASE_SHEET_MERGED_DETAIL": "Excel明细包含合并单元格，请展开为独立行后重新上传。",
+  "PURCHASE_IMPORT_TOO_MANY_LINES": "采购单超过200条明细，请拆分文件后重新导入。",
+  "PURCHASE_SHEET_REQUIRED": "请先读取Excel原件，再核对采购单。",
+  "PURCHASE_EXTRACTION_REQUIRED": "请先读取Excel原件，再核对采购单。",
+  "SOURCE_PURPOSE_MISMATCH": "这份原件的用途不符，请从对应入口重新导入。",
+  "SOURCE_RUN_MISMATCH": "提取结果不属于所选原件，请重新读取。",
+  "PURCHASE_SOURCE_REQUIRED": "请选择采购原件后再保存。",
+  "SOURCE_DECIMAL_INVALID": "价格或金额须为非负十进制文本，最多18位整数和6位小数。",
+  "PRODUCTION_UNIT_MISMATCH": "生产单位与成品基本单位不一致或尚未核实，请先核对订单及物料。",
+  "PRODUCTION_NOT_FOUND": "未找到这张生产单，请重新查询。",
+  "PRODUCTION_SOURCE_CHANGED": "订单已修订、删除或改绑物料，请核对来源后重新安排生产。",
+  "PRODUCTION_MATERIAL_REQUIRED": "请先在订单明细关联成品，再安排生产。",
+  "PRODUCTION_CLOSED": "生产单已关闭，不能新增领料或完工。",
+  "PRODUCTION_POSITIVE_QUANTITY_REQUIRED": "生产计划和领退料数量必须大于零。",
+  "PRODUCTION_EMPTY_COMPLETION": "合格数量与报废数量不能同时为零。",
+  "PRODUCTION_EXCEEDS_PLAN": "本次合格数量超过剩余生产计划，请核对已完工数量。",
+  "PRODUCTION_COMPLETION_NOT_FOUND": "未找到这笔完工记录，请重新读取。",
+  "PRODUCTION_COMPLETION_VOID": "这笔完工已作废，请重新读取。",
+  "PRODUCTION_RECEIPT_IN_USE": "当前成品库存不足以冲回这笔完工，请先核对出入库。",
+  "PRODUCTION_ISSUE_MISMATCH": "原领料记录不属于这张生产单，请重新选择。",
+  "PRODUCTION_INVENTORY_MISMATCH": "完工与库存记录不一致，本次操作未保存。",
+  "MATERIAL_KIND_MISMATCH": "物料类别不符，请从对应的成品或原料入口选择。",
+  "SUPPLIER_NOT_FOUND": "未找到这家供应商，请重新查询。",
+  "SUPPLIER_INACTIVE": "供应商已停用，不能登记新的采购或收料。",
+  "PURCHASE_ORDER_NOT_FOUND": "未找到这张采购单，请重新查询。",
+  "PURCHASE_RECEIPT_NOT_FOUND": "未找到这张收料单，请重新查询。",
+  "PURCHASE_ORDER_CLOSED": "采购单已关闭，不能继续收料。",
+  "PURCHASE_ORDER_UNAVAILABLE": "采购单已关闭或供应商不一致，请核对采购单。",
+  "PURCHASE_LINE_NOT_FOUND": "采购明细不属于这张采购单，请重新选择。",
+  "PURCHASE_LINE_DUPLICATE": "同一采购明细只能填写一次，请合并本次收料数量。",
+  "PURCHASE_LINE_MATERIAL_MISMATCH": "收料原料与采购明细不一致，请重新选择。",
+  "PURCHASE_OVER_RECEIPT": "本次收料超过采购未收数量，请核对后重新登记。",
+  "PURCHASE_RECEIPT_NOT_ACTIVE": "这张收料单已作废，请重新读取。",
+  "PURCHASE_RECEIPT_INSUFFICIENT_BALANCE": "当前原料库存不足以冲回整张收料单，请先核对实际出入库。",
+  "PURCHASE_INVENTORY_MISMATCH": "收料与库存记录不一致，本次操作未保存。",
+  "PURCHASE_QUANTITY_INVALID": "采购或收料数量必须大于零，并使用已核实的基本单位。",
+  "RAW_INVENTORY_INSUFFICIENT": "原料库存不足，领用数量不能超过当前余额。",
+  "RAW_RETURN_REQUIRES_ISSUE": "退料必须关联原领用记录，请重新选择。",
+  "RAW_RETURN_EXCEEDS_ISSUED": "累计退料不能超过这次领用的数量，请核对已退数量。",
+  "RAW_RECEIPT_REQUIRES_SUPPLIER": "原料入库请从采购与收料登记供应商收料。",
+  "PURCHASE_NUMBER_EXISTS": "这个单号已存在，请查看已有单据或换一个号码。",
+  "INVENTORY_ALREADY_OPEN": "这个物料已经开始记录库存，请重新读取当前余额。",
+  "INVENTORY_NOT_MANAGED": "这个物料还未开账，请先按当前实物数量开始记录。",
   "INVENTORY_UNIT_REQUIRED": "请先在物料池核实基本单位，再开始记录库存。",
   "INVENTORY_UNIT_MISMATCH": "订单单位与库存单位不同或尚未核实；请核对，或明确选择本次只记送货。",
   "INVENTORY_SHORTAGE": "账面库存不足。实物已发出时，请明确确认入库尚未登记；也可取消本次同步。",
@@ -107,7 +162,7 @@ const serviceErrors: Record<string, string> = {
   "FILE_TYPE_UNSUPPORTED": "仅支持 PNG、JPEG 和 PDF，请检查文件格式。",
   "FILE_TOO_LARGE": "文件超过 10 MiB，请拆分后重试。",
   "EXTRACTION_BUSY": "本地识别正在处理另一份文件，请稍后重试。",
-  "SOURCE_ALREADY_IMPORTED": "这份原件已经生成订单，请从文件列表打开原订单。",
+  "SOURCE_ALREADY_IMPORTED": "这份原件已经生成单据，请重新打开已上传原件查看。",
   "STATEMENT_EXPORTED_USE_VOID": "草稿已有导出，请填写原因并选择作废，历史文件会保留。",
   "STATEMENT_EXPORT_REVIEW_REQUIRED": "请先处理待核对调整、负金额或空明细，再导出。",
   "STATEMENT_EXPORT_STALE": "此文件对应旧版本，请在导出记录中选择查看历史文件。",
@@ -172,6 +227,7 @@ export function message(error: unknown): UiMessage {
   if (error.code === "STATEMENT_EXTERNAL_NUMBER_MISMATCH") key = "外部单号与发送依据或待核对记录不一致，请核对号码后重新发送或承接。";
   if (error.code === "STATEMENT_TEMPLATE_COVERAGE" && error.field === "external_document_number") key = "客户模板需要外部送货／退货单号，请为每条明细填写后再导出。";
   if (error.code === "SERVICE_UNAVAILABLE") key = "本地服务暂时不可用，请重试。";
+  if (error.code === "DEMO_UNAVAILABLE") return msg("演示入口暂未就绪（{0}），请重新连接后再试。", [error.status]);
   const fields: Record<string, string> = { full_name: "客户名称", customer_id: "客户", order_number: "客户订单号", business_date: "订单日期", currency: "币种", lines: "订单明细", description: "品名", quantity: "数量", unit: "单位", source_unit_price: "订单单价", source_amount: "原单金额", reason: "操作原因", password: "密码", username: "账号" };
   const parts = error.field?.split(".") ?? [];
   const name = fields[parts.at(-1) ?? ""];
@@ -182,6 +238,33 @@ export function message(error: unknown): UiMessage {
 }
 
 export const api = {
+  productionOrders: (q = "", offset = 0, order_id?: string) => client.GET("/api/v1/production-orders", { ...options(), params: { query: { q, offset, limit: 50, ...(order_id ? { order_id } : {}) } } }).then(value),
+  productionOrder: (production_id: string) => client.GET("/api/v1/production-orders/{production_id}", { ...options(), params: { path: { production_id } } }).then(value),
+  createProduction: (body: Schemas["ProductionInput"], key: string) => client.POST("/api/v1/production-orders", { ...commandOptions(key), body }).then(value),
+  productionIssues: (production_id: string, offset = 0) => client.GET("/api/v1/production-orders/{production_id}/issues", { ...options(), params: { path: { production_id }, query: { offset, limit: 50 } } }).then(value),
+  productionCompletions: (production_id: string, offset = 0) => client.GET("/api/v1/production-orders/{production_id}/completions", { ...options(), params: { path: { production_id }, query: { offset, limit: 50 } } }).then(value),
+  issueProduction: (production_id: string, body: Schemas["ProductionIssueInput"], key: string) => client.POST("/api/v1/production-orders/{production_id}/issues", { ...options(), params: { path: { production_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  returnProduction: (production_id: string, issue_id: string, body: Schemas["ProductionMaterialInput"], key: string) => client.POST("/api/v1/production-orders/{production_id}/issues/{issue_id}/returns", { ...options(), params: { path: { production_id, issue_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  completeProduction: (production_id: string, body: Schemas["ProductionCompletionInput"], key: string) => client.POST("/api/v1/production-orders/{production_id}/completions", { ...options(), params: { path: { production_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  voidProduction: (production_id: string, completion_id: string, body: Schemas["ProductionTransitionInput"], key: string) => client.POST("/api/v1/production-orders/{production_id}/completions/{completion_id}/void", { ...options(), params: { path: { production_id, completion_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  closeProduction: (production_id: string, body: Schemas["ProductionTransitionInput"], key: string) => client.POST("/api/v1/production-orders/{production_id}/close", { ...options(), params: { path: { production_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  suppliers: (q = "", offset = 0) => client.GET("/api/v1/suppliers", { ...options(), params: { query: { q, offset, limit: 50 } } }).then(value),
+  createSupplier: (body: Schemas["SupplierInput"], key: string) => client.POST("/api/v1/suppliers", { ...commandOptions(key), body }).then(value),
+  updateSupplier: (supplier_id: string, body: Schemas["SupplierUpdate"], key: string) => client.POST("/api/v1/suppliers/{supplier_id}", { ...options(), params: { path: { supplier_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  purchaseOrders: (q = "", offset = 0) => client.GET("/api/v1/purchase-orders", { ...options(), params: { query: { q, offset, limit: 50 } } }).then(value),
+  purchaseOrder: (order_id: string) => client.GET("/api/v1/purchase-orders/{order_id}", { ...options(), params: { path: { order_id } } }).then(value),
+  createPurchaseOrder: (body: Schemas["PurchaseOrderInput"], key: string) => client.POST("/api/v1/purchase-orders", { ...commandOptions(key), body }).then(value),
+  closePurchaseOrder: (order_id: string, body: Schemas["PurchaseTransitionInput"], key: string) => client.POST("/api/v1/purchase-orders/{order_id}/close", { ...options(), params: { path: { order_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  purchaseReceipts: (q = "", offset = 0) => client.GET("/api/v1/purchase-receipts", { ...options(), params: { query: { q, offset, limit: 50 } } }).then(value),
+  purchaseReceipt: (receipt_id: string) => client.GET("/api/v1/purchase-receipts/{receipt_id}", { ...options(), params: { path: { receipt_id } } }).then(value),
+  createPurchaseReceipt: (body: Schemas["PurchaseReceiptInput"], key: string) => client.POST("/api/v1/purchase-receipts", { ...commandOptions(key), body }).then(value),
+  voidPurchaseReceipt: (receipt_id: string, body: Schemas["PurchaseTransitionInput"], key: string) => client.POST("/api/v1/purchase-receipts/{receipt_id}/void", { ...options(), params: { path: { receipt_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  rawInventoryList: (cursor?: string) => client.GET("/api/v1/raw-inventory", { ...options(), params: { query: { ...(cursor ? { cursor } : {}), limit: 50 } } }).then(value),
+  rawInventory: (material_id: string, cursor?: string) => client.GET("/api/v1/raw-inventory/{material_id}", { ...options(), params: { path: { material_id }, query: { ...(cursor ? { cursor } : {}), limit: 50 } } }).then(value),
+  openRawInventory: (material_id: string, body: Schemas["InventoryQuantityInput"], key: string) => client.POST("/api/v1/raw-inventory/{material_id}/open", { ...options(), params: { path: { material_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  countRawInventory: (material_id: string, body: Schemas["InventoryCountInput"], key: string) => client.POST("/api/v1/raw-inventory/{material_id}/counts", { ...options(), params: { path: { material_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  issueRawInventory: (material_id: string, body: Schemas["RawIssueInput"], key: string) => client.POST("/api/v1/raw-inventory/{material_id}/issues", { ...options(), params: { path: { material_id }, header: { "Idempotency-Key": key } }, body }).then(value),
+  returnRawInventory: (issue_id: string, body: Schemas["RawIssueInput"], key: string) => client.POST("/api/v1/raw-inventory/entries/{issue_id}/returns", { ...options(), params: { path: { issue_id }, header: { "Idempotency-Key": key } }, body }).then(value),
   inventoryList: (cursor?: string) => client.GET("/api/v1/inventory", { ...options(), params: { query: { ...(cursor ? { cursor } : {}), limit: 50 } } }).then(value),
   inventory: (material_id: string, cursor?: string) => client.GET("/api/v1/inventory/{material_id}", { ...options(), params: { path: { material_id }, query: { ...(cursor ? { cursor } : {}), limit: 50 } } }).then(value),
   inventoryPreview: (material_ids: string[]) => client.POST("/api/v1/inventory/preview", { ...options(), body: { material_ids } }).then(value),
@@ -192,7 +275,7 @@ export const api = {
   inspectMaterialImport: (body: MaterialImportFile) => client.POST("/api/v1/materials/imports/inspect", { ...options(), signal: AbortSignal.timeout(45000), body }).then(value),
   previewMaterialImport: (body: MaterialImportInput) => client.POST("/api/v1/materials/imports/preview", { ...options(), signal: AbortSignal.timeout(45000), body }).then(value),
   confirmMaterialImport: (body: Schemas["MaterialImportConfirm"], key: string) => client.POST("/api/v1/materials/imports/confirm", { ...commandOptions(key), signal: AbortSignal.timeout(45000), body }).then(value),
-  materials: (q = "", offset = 0) => client.GET("/api/v1/materials", { ...options(), params: { query: { q, offset, limit: 50 } } }).then(value),
+  materials: (q = "", offset = 0, kind: "finished" | "raw" = "finished") => client.GET("/api/v1/materials", { ...options(), params: { query: { q, offset, kind, limit: 50 } } }).then(value),
   createMaterial: (body: MaterialInput, key: string) => client.POST("/api/v1/materials", { ...commandOptions(key), body }).then(value),
   updateMaterial: (material_id: string, body: Schemas["MaterialUpdate"], key: string) => client.POST("/api/v1/materials/{material_id}", { ...options(), params: { path: { material_id }, header: { "Idempotency-Key": key } }, body }).then(value),
   materialCodes: (material_id?: string, customer_id?: string, customer_code?: string) => client.GET("/api/v1/material-codes", { ...options(), params: { query: { ...(material_id ? { material_id } : {}), ...(customer_id ? { customer_id } : {}), ...(customer_code !== undefined ? { customer_code } : {}) } } }).then(value),
@@ -267,12 +350,16 @@ export const api = {
     link.download = `Statement-${item.statement_status === "confirmed" ? "Final" : "Draft"}-v${item.statement_version}-${item.id}${item.current ? "" : "-Historical"}.xlsx`;
     document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
   },
-  upload: async (file: File, key: string) => {
-    const response = await fetch("/api/v1/sources", { method: "POST", body: file, signal: AbortSignal.timeout(30000), headers: { "X-CSRF-Token": csrfToken, "Idempotency-Key": key, "X-Filename": encodeURIComponent(file.name), "Content-Type": file.type } });
+  upload: async (file: File, key: string, purpose: "sales_order" | "purchase_order" = "sales_order") => {
+    const mediaType = purpose === "purchase_order" && file.name.toLowerCase().endsWith(".xlsx") ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : file.type;
+    const response = await fetch(`/api/v1/sources?purpose=${purpose}`, { method: "POST", body: file, signal: AbortSignal.timeout(30000), headers: { "X-CSRF-Token": csrfToken, "Idempotency-Key": key, "X-Filename": encodeURIComponent(file.name), "Content-Type": mediaType } });
     const body = await response.json();
     return value<Schemas["SourceResult"]>({ response, ...(response.ok ? { data: body } : { error: body }) });
   },
-  sources: (cursor?: string) => client.GET("/api/v1/sources", { ...options(), params: { query: { ...(cursor ? { cursor } : {}), limit: 20 } } }).then(value),
+  sources: (cursor?: string, purpose: "sales_order" | "purchase_order" = "sales_order") => client.GET("/api/v1/sources", { ...options(), params: { query: { ...(cursor ? { cursor } : {}), limit: 20, purpose } } }).then(value),
+  source: (source_id: string) => client.GET("/api/v1/sources/{source_id}", { ...options(), params: { path: { source_id } } }).then(value),
+  purchaseOrderBySource: (source_id: string) => client.GET("/api/v1/purchase-orders/by-source/{source_id}", { ...options(), params: { path: { source_id } } }).then(value),
+  previewPurchaseSheet: (extraction_id: string, body: Schemas["PurchaseSheetMapping"]) => client.POST("/api/v1/extractions/{extraction_id}/purchase-preview", { ...options(), params: { path: { extraction_id } }, body }).then(value),
   extract: (source_id: string, key: string) => client.POST("/api/v1/sources/{source_id}/extractions", { ...commandOptions(key), signal: AbortSignal.timeout(110000), params: { path: { source_id }, header: { "Idempotency-Key": key } } }).then(value),
   extraction: (extraction_id: string) => client.GET("/api/v1/extractions/{extraction_id}", { ...options(), params: { path: { extraction_id } } }).then(value),
   createDelivery: (body: DeliveryInput, key: string) => client.POST("/api/v1/deliveries", { ...commandOptions(key), body }).then(value),
