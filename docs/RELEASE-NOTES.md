@@ -6,6 +6,10 @@ This public release follows the delivered version `b4e2d4b6ea86c4b2`. The mainta
 
 本公开版基于已交付的 `b4e2d4b6ea86c4b2`。维护者于 2026-11-04 确认该交付版本已在非测试本机部署跑通；公开包单独编号、单独记录检查，不冒充原冻结包的相同字节。
 
+CI final result confirmed on 2026-11-04: [public run 41860994186](https://github.com/Doublzzz/FactoryFlow/actions/runs/41860994186) **completed / success**, with **1,235 passed / 14 skipped**. The earlier pending metadata has resolved. Windows package build `e8afc55a99d89c32` and download bytes are unchanged.
+
+公开仓库 CI 已结束并成功：1,235 项通过、14 项按平台条件跳过。此前等待最终状态的记录已收口；安装包仍为已验证版本，工厂实际业务、打印与 OCR 效果继续按使用验收。
+
 Changes since preview.2 / 相比 preview.2：
 
 - Supplier purchasing, partial/direct receipts, raw-material opening balances, issues, partial returns, counts and immutable movements. / 供应商采购、分批或直接收料、原料开账、领用、分次退料、实盘与流水。
