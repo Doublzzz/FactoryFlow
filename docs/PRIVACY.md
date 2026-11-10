@@ -1,5 +1,11 @@
 # Privacy and snapshot scope / 隐私与快照范围
 
+## Optional MCP data flow / 可选 MCP 数据流
+
+The core offline application stores data locally and does not require cloud AI. Enabling the separate MCP adapter gives the configured client the results of authorized queries. Whether that client forwards data to cloud AI depends on the user's chosen client/service; FactoryFlow's local-storage claim does not make that external processing offline. Use a dedicated viewer and keep credentials outside the repository. Synthetic-only write trials require a separate explicit operator configuration; a `synthetic` label alone does not prove isolation.
+
+核心离线应用默认本机运行，不依赖云端 AI。启用可选 MCP 后，授权查询结果会交给所选客户端；是否进一步发送到云端 AI 由该客户端/服务决定，不属于“离线处理”的承诺。使用专用只读账号，凭据不入库；写入试验另需显式配置的合成环境 operator，标签不代替数据隔离。
+
 The public history starts from a reviewed source snapshot. Later candidates are assembled on that public baseline; they do not inherit the development repository's old commits or internal context records. Downloadable application-source ZIPs contain no Git metadata.
 
 Included: application source, migrations, generated API contracts, locked dependency manifests, synthetic tests, generic operating documentation, licensed UI font resources, and explicitly synthetic demo assets.

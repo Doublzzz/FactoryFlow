@@ -10,6 +10,7 @@ class CustomerRepository(Protocol):
     def get(self, organization_id: UUID, customer_id: UUID) -> dict | None: ...
     def insert(self, organization_id: UUID, customer_id: UUID, full_name: str) -> dict: ...
     def list(self, organization_id: UUID) -> list[dict]: ...
+    def search(self, organization_id: UUID, name: str, cursor: UUID | None, limit: int) -> dict: ...
 
 
 class CustomerAccess:
@@ -57,3 +58,11 @@ class CustomerService:
     def list(self, actor: Actor) -> list[dict]:
         with self.transaction() as work:
             return work.customers.list(actor.organization_id)
+
+    def search(self, actor: Actor, name: str, cursor: UUID | None = None, limit: int = 50) -> dict:
+        if not isinstance(name, str) or not name.strip() or len(name) > 200:
+            raise BusinessError("CUSTOMER_NAME_REQUIRED", field="name")
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise BusinessError("INVALID_INPUT", field="limit")
+        with self.transaction() as work:
+            return work.customers.search(actor.organization_id, name.strip(), cursor, limit)

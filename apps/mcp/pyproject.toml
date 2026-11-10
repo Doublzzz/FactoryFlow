@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling==1.32.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "factoryflow-mcp"
+version = "0.1.0"
+description = "Optional local MCP reads and synthetic order confirmation for FactoryFlow"
+requires-python = ">=3.11"
+dependencies = ["mcp==2.3.0", "httpx==0.28.1"]
+
+[project.scripts]
+factoryflow-mcp = "factoryflow_mcp.server:main"
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "ruff==0.16.9"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/factoryflow_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

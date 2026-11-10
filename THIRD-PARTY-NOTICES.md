@@ -37,6 +37,10 @@ pypdfium2 wheels include PDFium and additional build-component notices. The psyc
 
 The lockfiles also include transitive and development dependencies. This limited source review does not claim that every transitive license has been independently audited.
 
+## Optional MCP source integration — 2026-11-09
+
+The adapter has its own `apps/mcp/uv.lock`; it does not vendor dependency implementations or add them to the existing preview.3 Windows runtime. Direct-dependency license labels read from the installed package metadata are `mcp 2.3.0` (MIT) and `httpx 0.28.1` (BSD-3-Clause). Upstream sources: [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) and [HTTPX](https://github.com/encode/httpx). Preserve their full notices and transitive dependency terms when preparing any future redistributed runtime; this source update does not claim such a runtime audit.
+
 ## Separate Windows preview distribution
 
 The source snapshot does not vendor Python/PostgreSQL distributions, installed packages, Microsoft runtime binaries or OCR models. The matching Windows preview includes a package-level inventory and full retained notice files in `app/third-party` and beside each runtime. Third-party components keep their own licenses.

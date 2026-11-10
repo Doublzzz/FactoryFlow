@@ -50,3 +50,24 @@ class CustomerRepository:
             {"org": organization_id},
         ).mappings()
         return [self.view(row) for row in rows]
+
+    def search(self, organization_id, name, cursor, limit):
+        after = " AND id > :cursor" if cursor is not None else ""
+        rows = (
+            self.conn.execute(
+                text(
+                    "SELECT id,full_name FROM customers WHERE organization_id=:org "
+                    'AND strpos(casefold(full_name COLLATE "pg_unicode_fast"),'
+                    'casefold(CAST(:name AS text) COLLATE "pg_unicode_fast")) > 0'
+                    + after
+                    + " ORDER BY id LIMIT :limit"
+                ),
+                {"org": organization_id, "name": name, "cursor": cursor, "limit": limit + 1},
+            )
+            .mappings()
+            .all()
+        )
+        return {
+            "items": [self.view(row) for row in rows[:limit]],
+            "next_cursor": str(rows[limit - 1]["id"]) if len(rows) > limit else None,
+        }

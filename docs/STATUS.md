@@ -1,5 +1,13 @@
 # Status / 当前状态
 
+## Source update / 源码更新 — 2026-11-09
+
+Optional MCP source now provides six read-only tools, including paginated customer search, complete order lookup and committed-confirmation recovery after interruption. Explicit synthetic-only operator configuration adds preview and confirmation, for eight tools total. The matching backend adds three GET endpoints; schema remains `0018_purchase_documents`.
+
+新增可选 MCP 源码及三个后端查询接口。默认只读；中断后用原编号核对，unknown 不自动补写。使用方式见 [中文](../apps/mcp/README.md) / [English](../apps/mcp/README.en.md)，检查范围见 [VERIFICATION](VERIFICATION.md)。
+
+This source update does not replace the preview.3 Windows ZIP, create a new release tag, change existing installations or establish factory acceptance. The package records below retain their original versions and results.
+
 ## v0.1.0-preview.3 — 2026-11-04
 
 Public Windows build: `e8afc55a99d89c32`. Local Windows validation: 1,248 passed / 1 skipped; final ZIP installation and isolated backup/restore passed. Public GitHub CI is confirmed **completed / success** (1,235 passed / 14 skipped on Linux), as detailed in [VERIFICATION](VERIFICATION.md).

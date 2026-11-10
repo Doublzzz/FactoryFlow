@@ -16,6 +16,7 @@ class OrderRepository(Protocol):
         self, actor: Actor, order_id: UUID, revision: dict, order: ConfirmedOrder
     ) -> None: ...
     def get(self, actor: Actor, order_id: UUID, lock: bool = False) -> dict: ...
+    def find_id(self, actor: Actor, customer_id: UUID, order_number: str) -> UUID: ...
     def lines(self, actor: Actor, revision_id: UUID) -> list[dict]: ...
     def replace_revision(
         self, actor: Actor, order_id: UUID, revision: dict, order: ConfirmedOrder
@@ -238,26 +239,43 @@ class OrderService:
 
     def detail(self, actor: Actor, order_id: UUID) -> dict:
         with self.transaction() as work:
-            order = work.orders.get(actor, order_id)
-            customer = work.customers.require(actor, UUID(order["customer_id"]))
-            lines = (
-                work.orders.material_lines(actor, UUID(order["revision_id"]))
-                if work.materials
-                else work.orders.lines(actor, UUID(order["revision_id"]))
-            )
-            if work.materials:
-                materials = work.materials.summarize(
-                    actor, [line["material_id"] for line in lines if line.get("material_id")]
-                )
-                lines = [
-                    {**line, "material": materials.get(line.get("material_id"))} for line in lines
-                ]
+            return self._detail(work, actor, order_id)
+
+    def lookup(self, actor: Actor, customer_id: UUID, order_number: str) -> dict:
+        number = required_text(order_number, "order_number", 100)
+        with self.transaction() as work:
+            order_id = work.orders.find_id(actor, customer_id, number)
+            return self._detail(work, actor, order_id)
+
+    def confirmation(self, actor: Actor, key: UUID) -> dict:
+        with self.transaction() as work:
+            result = work.journal.read_result(actor, "order.confirm", key)
             return {
-                **order,
-                "customer_name": customer["full_name"],
-                "lines": lines,
-                "revisions": work.documents.history(actor, order_id),
+                "idempotency_key": str(key),
+                "outcome": "confirmed" if result is not None else "unknown",
+                "command_result": result,
             }
+
+    @staticmethod
+    def _detail(work, actor, order_id):
+        order = work.orders.get(actor, order_id)
+        customer = work.customers.require(actor, UUID(order["customer_id"]))
+        lines = (
+            work.orders.material_lines(actor, UUID(order["revision_id"]))
+            if work.materials
+            else work.orders.lines(actor, UUID(order["revision_id"]))
+        )
+        if work.materials:
+            materials = work.materials.summarize(
+                actor, [line["material_id"] for line in lines if line.get("material_id")]
+            )
+            lines = [{**line, "material": materials.get(line.get("material_id"))} for line in lines]
+        return {
+            **order,
+            "customer_name": customer["full_name"],
+            "lines": lines,
+            "revisions": work.documents.history(actor, order_id),
+        }
 
     @staticmethod
     def select_materials(work, actor, customer_id, content, payload):

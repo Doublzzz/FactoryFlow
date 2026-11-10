@@ -9,12 +9,12 @@
 <p align="center">
   <strong>Orders, deliveries and customer statements for small manufacturers.</strong><br>
   Built with direct involvement from frontline factory staff. An earlier version is in daily factory use.<br>
-  Start with your first order, no setup imports. Your data and OCR stay on your own computer.
+  Start with your first order, no setup imports. Core workflows and OCR run on your own computer by default.
 </p>
 
 <p align="center">
   <a href="https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.3"><img alt="Windows preview" src="https://img.shields.io/github/v/release/Doublzzz/FactoryFlow?include_prereleases&label=Windows%20preview&color=5b6ee1"></a>
-  <img alt="Data stays local" src="https://img.shields.io/badge/data-stays%20local-2f8f5b">
+  <img alt="Local by default" src="https://img.shields.io/badge/data-local%20by%20default-2f8f5b">
   <img alt="UI in Chinese and English" src="https://img.shields.io/badge/UI-%E4%B8%AD%E6%96%87%20%7C%20English-555">
   <a href="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml"><img alt="CI" src="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml/badge.svg?branch=main"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/Doublzzz/FactoryFlow?color=555"></a>
@@ -38,7 +38,7 @@ It may also suit a trading business that only needs customer orders, partial del
 
 **No catalog required. Start with the first order.** Many small factories have no tidy customer list or item catalog. Photograph an order or type in a paper one; create the customer while you enter it. When the same items keep coming back, add them to the item catalog. You can still import an existing item list first.
 
-**Your data stays on this computer.** The offline package bundles its own database and local OCR models. Order originals, deliveries and statements are stored locally. Nothing goes through a cloud service, no online account is needed, and it keeps working without internet.
+**Core workflows stay on this computer by default.** The offline package bundles its own database and local OCR models. Order originals, deliveries and statements are stored locally. By default nothing goes through a cloud service, no online account is needed, and it keeps working without internet. Optional MCP data flow is described below.
 
 **People confirm each step, and the numbers add up.** Recognition only proposes candidates; an order exists only after someone checks it against the original. PCS, KG and M stay separate, quantities and money use exact decimals, and revising an order saves a new version while keeping the old one and its evidence.
 
@@ -111,6 +111,14 @@ Try this preview with a new data directory and keep existing installations and b
 Finished-goods inventory, purchasing/raw materials and production records are now part of preview.3. For other workflows or features tailored to your factory, [get in touch](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml). Tell me who will use it, how you handle the work today, and what you need it to do. We can discuss the scope from there.
 
 For now, use the GitHub feature request form to start the conversation. Keep public posts to a general description; leave out real customer documents and sensitive business information.
+
+## Optional AI / MCP integration (source only)
+
+To let an assistant answer questions such as “What is still outstanding for this customer?”, configure the separate [MCP adapter](apps/mcp/README.en.md). Six read-only tools cover open orders, finished-goods inventory, statement status, customer-name search, full order details and interrupted-confirmation checks. Customer search is paginated; orders can be found by customer plus order number or by ID. Recovery uses the original key and never creates another order automatically when the outcome is unknown.
+
+Use the adapter with the matching source backend. **The existing preview.3 Windows ZIP does not include this integration or its new query endpoints.** Explicit credentials for a separate synthetic-test operator add preview and confirmation, bringing the total to eight tools. The write tools are intended only for isolated synthetic trials; the operator must verify that isolation and must not use them with real business data. No inventory, delivery or statement write tools are exposed.
+
+When enabled, query results go to the connected MCP client. Whether that client sends them to cloud AI depends on your chosen client and service. Grant only the access you need; preserve units, currencies and exact decimal strings. Statement amounts are not payments. See the [setup guide](apps/mcp/README.en.md), [中文说明](apps/mcp/README.md) and [verification scope](docs/VERIFICATION.md).
 
 ## Develop from source
 

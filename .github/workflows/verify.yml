@@ -80,4 +80,11 @@ jobs:
       - run: uv run python scripts/export-openapi.py --check
       - run: npm run contracts:check
       - run: npm run typecheck
+      - name: Verify optional MCP adapter
+        working-directory: apps/mcp
+        run: |
+          uv sync --locked
+          uv run pytest -c pyproject.toml --confcutdir . -q
+          uv run ruff check src tests
+          uv run ruff format --check src tests
       - run: git diff --check

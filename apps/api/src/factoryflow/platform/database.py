@@ -44,6 +44,16 @@ class Journal:
     def __init__(self, conn):
         self.conn = conn
 
+    def read_result(self, actor: Actor, command: str, key: UUID):
+        """Observe committed results only; absence is not proof a command failed."""
+        return self.conn.execute(
+            text(
+                "SELECT result FROM command_results "
+                "WHERE organization_id=:org AND command_type=:command AND idempotency_key=:key"
+            ),
+            {"org": actor.organization_id, "command": command, "key": key},
+        ).scalar_one_or_none()
+
     def claim(self, actor: Actor, command: str, key: UUID, payload: dict):
         digest = hashlib.sha256(
             json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()

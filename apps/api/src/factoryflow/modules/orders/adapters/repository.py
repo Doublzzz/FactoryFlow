@@ -111,6 +111,18 @@ class OrderRepository:
         )
         self.insert_lines(actor, order_id, revision, order)
 
+    def find_id(self, actor, customer_id, order_number):
+        identifier = self.conn.execute(
+            text(
+                "SELECT id FROM orders WHERE organization_id=:org "
+                "AND customer_id=:customer AND order_number=:number"
+            ),
+            {"org": actor.organization_id, "customer": customer_id, "number": order_number},
+        ).scalar_one_or_none()
+        if identifier is None:
+            raise BusinessError("ORDER_NOT_FOUND", 404)
+        return identifier
+
     def get(self, actor, order_id, lock=False):
         sql = "SELECT * FROM orders WHERE organization_id=:org AND id=:id"
         if lock:

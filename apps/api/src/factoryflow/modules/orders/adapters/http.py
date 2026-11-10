@@ -141,6 +141,12 @@ class OrderResult(StrictDTO):
     material_links: list[dict] = Field(default_factory=list)
 
 
+class OrderConfirmationStatus(StrictDTO):
+    idempotency_key: UUID
+    outcome: Literal["confirmed", "unknown"]
+    command_result: OrderResult | None
+
+
 class OrderNewMaterial(StrictDTO):
     own_code: str | None = Field(default=None, max_length=100)
     name: str = Field(min_length=1, max_length=500)
@@ -253,6 +259,31 @@ def confirm_order(
 @router.post("/orders/preview", operation_id="previewOrder", response_model=OrderPreview)
 def preview_order(body: OrderInput, request: Request, actor: CurrentActor):
     return services(request).orders.preview(actor, body.model_dump(mode="json"))
+
+
+@router.get("/orders/lookup", operation_id="lookupOrder", response_model=OrderDetail)
+def lookup_order(
+    request: Request,
+    actor: CurrentActor,
+    customer_id: UUID,
+    order_number: Annotated[str, Query(min_length=1, max_length=100)],
+):
+    return services(request).orders.lookup(actor, customer_id, order_number)
+
+
+@router.get(
+    "/orders/confirmations/{idempotency_key}",
+    operation_id="getOrderConfirmation",
+    response_model=OrderConfirmationStatus,
+    description=(
+        "Read the committed order.confirm receipt in the authenticated organization. "
+        "Unknown does not prove failure: a command may still be in progress. This query never "
+        "replays a command. The receipt describes the original confirmation, "
+        "not current order state."
+    ),
+)
+def get_order_confirmation(idempotency_key: UUID, request: Request, actor: CurrentActor):
+    return services(request).orders.confirmation(actor, idempotency_key)
 
 
 @router.get("/orders/{order_id}", operation_id="getOrder", response_model=OrderDetail)

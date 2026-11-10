@@ -1,5 +1,14 @@
 # Release notes / 版本说明
 
+## Source update, no new installer / 源码更新，未发新安装包 — 2026-11-09
+
+- Optional stdio MCP adapter: six default viewer queries; synthetic operator preview/confirmation remain explicit opt-in (eight tools total). / 可选 stdio MCP，默认六项只读；合成订单预览与确认须显式启用。
+- Customer-name pagination with Unicode case folding; exact order ID or customer-plus-number lookup, including fully delivered/deleted orders and revision references. / 客户名称分页检索，按订单 ID 或客户＋单号查完整详情。
+- Original confirmation receipts remain queryable after response loss/process restart. Unknown outcomes never authorize automatic re-entry; current order/readback status is separate from the committed receipt. / 中断或重启后核对原回执，未知不自动重建，原确认与当前状态分开。
+- Bilingual setup and privacy boundaries, contract projections and MCP CI checks. No schema migration or change to the owning business write commands. / 补齐中英文接入、隐私边界、生成合同与 MCP CI，无迁移及业务写命令语义变更。
+
+The adapter requires the matching source backend and is not part of the existing preview.3 ZIP. No new Windows package or release tag accompanies this update. See [setup](../apps/mcp/README.en.md) and [verification](VERIFICATION.md). / 现有 preview.3 安装包不含本次新增接口；本轮没有更换安装包或新增 tag。
+
 ## v0.1.0-preview.3 — 2026-11-04
 
 This public release follows the delivered version `b4e2d4b6ea86c4b2`. The maintainer confirmed on 2026-11-04 that the delivered version was deployed and ran on a non-test local installation. The public package build is `e8afc55a99d89c32` and is separately verified; it does not claim to be the identical frozen private package.

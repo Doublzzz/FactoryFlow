@@ -1,6 +1,6 @@
 # Windows preview distribution
 
-The source snapshot and Windows offline package use the same application source. The source contains no runtime accounts, databases, installed toolchains or old Git history. The prepared release is a developer preview; clean-machine Windows and factory acceptance remain separate.
+For each tagged Windows release, its application-source attachment corresponds to that Windows package. Later source commits can contain features absent from an existing ZIP. The 2026-11-09 MCP source integration and its separate dependencies are not included in preview.3. The source contains no runtime accounts, databases, installed toolchains or old Git history. The prepared release is a developer preview; clean-machine Windows and factory acceptance remain separate.
 
 The preview.3 source is integrated on the existing public history, without importing private development history, runtime records or machine paths. It preserves the public login-only UI and MIT metadata. The public Windows package reuses the verified delivered runtime and migrations, synchronizes four formatting-only backend differences to the public source after Python AST-equivalence checks, replaces the frontend with a build of this public source, and records its own build ID. The delivered `b4e2d4b6ea86c4b2` remains a separate artifact; previous local acceptance is not automatically acceptance of this repackaged ZIP.
 

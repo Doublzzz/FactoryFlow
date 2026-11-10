@@ -1,5 +1,15 @@
 # Verification scope / 验证范围
 
+## MCP source update / MCP 源码更新 — 2026-11-09
+
+The matching development implementation passed **112 MCP tests** and **14 targeted real PostgreSQL tests** after the final query corrections. Its broader backend run completed **1,280 passed / 1 skipped** before the last Unicode SQL correction; the 14-test targeted rerun covers that correction. These development results are not relabeled as a full run of this public checkout. The source workflow now separately installs and tests the optional MCP package; current repository CI is shown in Actions.
+
+Real HTTP/stdio tests in a new synthetic environment covered six default read tools, eight opt-in tools, a discarded confirmation response followed by process restart, a real committed HTTP response deliberately lost, and an unsent preview that remains unknown. Final-source readback recovered both original confirmations. Eight successful reads plus a missing-order error check left all 44 business tables unchanged, excluding normal sessions and identity-login audit. Across the full synthetic trial, only the expected three orders/six lines and corresponding revisions, receipts, order events and audit rows were added; inventory, fulfillment and statements were unchanged. Test services were stopped.
+
+本地匹配实现：MCP 112 项、最终 PostgreSQL 专项 14 项通过；较早的后端全量为 1280 通过/1 条条件跳过，不冒称最终公开候选全量重跑。真实 HTTP 响应丢失、stdio 重启与原回执回查通过；无回执不允许自动补写。最终查询前后 44 张业务表不变，所有试验均使用隔离合成数据。
+
+Required checks cover malformed/nested projections, exact decimal strings/null, Unicode/literal matching, pagination beyond 1000 customers, organization/command isolation, authentication, uncommitted/rolled-back confirmation, same-key replay, changed current state and obsolete endpoints. See [MQ01–MQ09](MCP-QUERY-RECOVERY-PLAN.md). This update does not claim new installer, client-UI, remote/mobile or factory acceptance. Older package checks below do not cover these new tools.
+
 ## preview.3 public candidate — 2026-11-04
 
 [Public GitHub run 41860994186](https://github.com/Doublzzz/FactoryFlow/actions/runs/41860994186) on source commit `3b0273334a8ca307eff5c9ef5a3dd096d6fffbe0`: **1,235 passed / 14 skipped** on Linux with PostgreSQL 18; every build/test/style/architecture/contract/typecheck step reported success. The complete job log was retrieved. Final status rechecked on 2026-11-04: **completed / success**. The earlier publication-time metadata delay has ended; the public workflow is now confirmed successful. Platform skips and factory acceptance boundaries below remain applicable.

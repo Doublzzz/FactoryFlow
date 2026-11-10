@@ -9,12 +9,12 @@
 <p align="center">
   <strong>给小工厂老板和办公室人员的订单、送货与对账工具。</strong><br>
   工厂一线业务人员直接参与制作，早期版本已在工厂日常使用。<br>
-  不用先导入资料，从第一张订单开始用；数据和识别都在你自己的电脑上。
+  不用先导入资料，从第一张订单开始用；核心业务和识别默认在你自己的电脑上。
 </p>
 
 <p align="center">
   <a href="https://github.com/Doublzzz/FactoryFlow/releases/tag/v0.1.0-preview.3"><img alt="Windows 预览版" src="https://img.shields.io/github/v/release/Doublzzz/FactoryFlow?include_prereleases&label=Windows%20%E9%A2%84%E8%A7%88%E7%89%88&color=5b6ee1"></a>
-  <img alt="数据只在本机" src="https://img.shields.io/badge/%E6%95%B0%E6%8D%AE-%E5%8F%AA%E5%9C%A8%E6%9C%AC%E6%9C%BA-2f8f5b">
+  <img alt="默认本机运行" src="https://img.shields.io/badge/%E6%95%B0%E6%8D%AE-%E9%BB%98%E8%AE%A4%E6%9C%AC%E6%9C%BA-2f8f5b">
   <img alt="界面 中文和 English" src="https://img.shields.io/badge/%E7%95%8C%E9%9D%A2-%E4%B8%AD%E6%96%87%20%7C%20English-555">
   <a href="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml"><img alt="CI" src="https://github.com/Doublzzz/FactoryFlow/actions/workflows/verify.yml/badge.svg?branch=main"></a>
   <a href="LICENSE"><img alt="MIT 许可" src="https://img.shields.io/github/license/Doublzzz/FactoryFlow?color=555"></a>
@@ -38,7 +38,7 @@
 
 **不用先建档，从第一张订单开始。** 很多小厂手上没有整理好的客户名单和物料表。拿到订单拍张照、或者照着纸质单填，客户在录单时顺手新建；同样的货反复出现了，再把它收录进物料池。已经有物料表的，也可以先导入。
 
-**数据只在这台电脑上。** 离线安装包自带数据库和本地识别模型。订单原件、送货记录、对账文件都存在本机，不经过云端，不用注册在线账号，断网也能用。
+**核心业务默认在这台电脑上。** 离线安装包自带数据库和本地识别模型。订单原件、送货记录、对账文件都存在本机；默认不经过云端，不用注册在线账号，断网也能用。可选 MCP 的数据流见下方接入说明。
 
 **每一步由人确认，数量对得上。** 识别只给候选，人对照原件核对后才生成订单。件、千克、米分开算，数量和金额用精确小数；改订单会另存新版本，旧版本和凭证都留着。
 
@@ -111,6 +111,14 @@ Windows 10 1903+ / Windows 11 x64 开发者预览：[v0.1.0-preview.3](https://g
 成品库存、采购与原料、小生产已进入 preview.3。如果你需要其他业务流程，或希望按自己的工厂流程定制功能，欢迎[联系我讨论](https://github.com/Doublzzz/FactoryFlow/issues/new?template=feature_request.yml)。可以先说说谁来用、现在怎么处理、希望解决什么问题，再一起确认范围。
 
 目前通过 GitHub 功能建议接收需求。公开留言只需概述场景，不要附真实客户单据或敏感业务资料。
+
+## 可选 AI / MCP 接入（源码版）
+
+需要让 AI 帮忙查“这个客户还有哪些订单没交”时，可单独配置 [MCP 适配器](apps/mcp/README.md)。默认六个只读工具：未交订单、成品库存、对账状态、客户名称检索、完整订单详情、确认中断后的回执核对。客户检索支持分页；订单可按客户＋单号或 ID 查找；中断后使用原编号核对，结果未知不会自动重建订单。
+
+适配器需与本次源码后端配套运行，**不包含在现有 preview.3 Windows 安装包中**。只有显式配置独立的合成测试 operator，才增加预览和确认两个工具，合计八个；写工具仅供独立合成环境试验，操作者须核验数据隔离，不能用于真实业务；没有库存、送货或对账写工具。
+
+启用后，查询结果会提供给所连接的 MCP 客户端；是否再发送到云端 AI 取决于你选择的客户端和服务。请按需要授权，数量和金额保持原单位、币种及精确小数字符串；对账金额不是到账金额。见 [接入说明](apps/mcp/README.md)、[English setup](apps/mcp/README.en.md) 和[验证范围](docs/VERIFICATION.md)。
 
 ## 从源码开发
 
